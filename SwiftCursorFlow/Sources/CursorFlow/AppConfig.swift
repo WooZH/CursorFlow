@@ -13,6 +13,7 @@ struct AppConfig: Codable, Equatable {
     var clickInterval: TimeInterval = 1
     var clickButton: MouseButton = .left
     var clickPosition: ClickPosition?
+    var keepAwakeEnabled: Bool = false
     var batteryProtectionEnabled: Bool = false
     var batteryThreshold: Int = 5
     var language: AppLanguage = .english

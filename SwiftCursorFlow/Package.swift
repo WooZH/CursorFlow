@@ -11,6 +11,11 @@ let package = Package(
         .executable(name: "CursorFlow", targets: ["CursorFlow"])
     ],
     targets: [
-        .executableTarget(name: "CursorFlow")
+        .executableTarget(
+            name: "CursorFlow",
+            linkerSettings: [
+                .linkedFramework("IOKit")
+            ]
+        )
     ]
 )

@@ -1,16 +1,27 @@
 import AppKit
 import Combine
+import IOKit.pwr_mgt
 
 @MainActor
 final class AppModel: ObservableObject {
     @Published var config: AppConfig {
-        didSet { config.save() }
+        didSet {
+            config.save()
+            updatePowerAssertion()
+            updateStatusIcon()
+        }
     }
     @Published var movementEnabled = false {
-        didSet { updateStatusIcon() }
+        didSet {
+            updatePowerAssertion()
+            updateStatusIcon()
+        }
     }
     @Published var clickEnabled = false {
-        didSet { updateStatusIcon() }
+        didSet {
+            updatePowerAssertion()
+            updateStatusIcon()
+        }
     }
     @Published var clickCount: UInt64 = 0
     @Published var accessibilityGranted = MouseController.accessibilityGranted()
@@ -39,11 +50,22 @@ final class AppModel: ObservableObject {
     private var clickCaptureMonitor: Any?
     private var localClickCaptureMonitor: Any?
     private var lastBatteryPoll = Date.distantPast
+    private var displaySleepAssertionID: IOPMAssertionID = 0
+    private var systemSleepAssertionID: IOPMAssertionID = 0
 
     init() {
         config = AppConfig.load()
         tickTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
+        }
+    }
+
+    deinit {
+        if displaySleepAssertionID != 0 {
+            IOPMAssertionRelease(displaySleepAssertionID)
+        }
+        if systemSleepAssertionID != 0 {
+            IOPMAssertionRelease(systemSleepAssertionID)
         }
     }
 
@@ -297,13 +319,57 @@ final class AppModel: ObservableObject {
     }
 
     private func updateStatusIcon() {
-        let active = movementEnabled || clickEnabled
+        let active = movementEnabled || clickEnabled || config.keepAwakeEnabled
         if active, automationStartedAt == nil {
             automationStartedAt = Date()
         } else if !active {
             automationStartedAt = nil
         }
         onStatusChanged?(active)
+    }
+
+    private func updatePowerAssertion() {
+        let shouldStayAwake = movementEnabled || clickEnabled || config.keepAwakeEnabled
+        if shouldStayAwake {
+            createPowerAssertionIfNeeded(
+                type: kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
+                id: &displaySleepAssertionID
+            )
+            createPowerAssertionIfNeeded(
+                type: kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+                id: &systemSleepAssertionID
+            )
+        } else {
+            releasePowerAssertions()
+        }
+    }
+
+    private func createPowerAssertionIfNeeded(type: CFString, id: inout IOPMAssertionID) {
+        guard id == 0 else { return }
+        var assertionID = IOPMAssertionID(0)
+        let reason = "CursorFlow is keeping this Mac awake" as CFString
+        let result = IOPMAssertionCreateWithName(
+            type,
+            IOPMAssertionLevel(kIOPMAssertionLevelOn),
+            reason,
+            &assertionID
+        )
+        if result == kIOReturnSuccess {
+            id = assertionID
+        } else {
+            NSLog("CursorFlow keep-awake assertion failed: \(result)")
+        }
+    }
+
+    private func releasePowerAssertions() {
+        if displaySleepAssertionID != 0 {
+            IOPMAssertionRelease(displaySleepAssertionID)
+            displaySleepAssertionID = 0
+        }
+        if systemSleepAssertionID != 0 {
+            IOPMAssertionRelease(systemSleepAssertionID)
+            systemSleepAssertionID = 0
+        }
     }
 
     private func finishPositionCapture(at point: CGPoint) {

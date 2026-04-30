@@ -66,7 +66,7 @@ struct ContentView: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text("CursorFlow")
                     .font(.system(size: 24, weight: .bold))
-                statusPill(model.movementEnabled || model.clickEnabled ? t("active") : t("idle"), active: model.movementEnabled || model.clickEnabled)
+                statusPill(appActive ? t("active") : t("idle"), active: appActive)
             }
             Spacer()
             HStack(spacing: 12) {
@@ -318,6 +318,14 @@ struct ContentView: View {
     private var optionsPane: some View {
         VStack(spacing: 12) {
             section {
+                HStack {
+                    Label(t("keepAwake"), systemImage: "cup.and.saucer.fill")
+                    Spacer()
+                    Toggle("", isOn: binding(\.keepAwakeEnabled)).labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: accent))
+                        .focusable(false)
+                }
+
                 Toggle(t("batteryProtection"), isOn: binding(\.batteryProtectionEnabled))
                     .focusable(false)
 
@@ -544,6 +552,10 @@ struct ContentView: View {
         model.cognitiveState == "User Active" ? t("userActive") : t("auto")
     }
 
+    private var appActive: Bool {
+        model.movementEnabled || model.clickEnabled || model.config.keepAwakeEnabled
+    }
+
     private var clickToggleBinding: Binding<Bool> {
         Binding {
             model.clickEnabled
@@ -758,7 +770,7 @@ private enum L {
             "clicks": "Clicks", "reset": "Reset", "notSet": "Not set",
             "system": "System", "light": "Light", "dark": "Dark",
             "left": "Left", "right": "Right", "natural": "Natural", "smart": "Smart", "subtle": "Subtle",
-            "timer": "Stop after", "batteryProtection": "Pause on low battery",
+            "timer": "Stop after", "keepAwake": "Keep awake", "batteryProtection": "Pause on low battery",
             "batteryThreshold": "Threshold", "battery": "Battery", "charging": "charging", "unknown": "Unknown",
             "stateIdle": "Idle", "stateUserActive": "User active", "stateMicro": "Micro", "stateNavigating": "Navigating", "stateReading": "Reading", "stateThinking": "Thinking",
             "footer": "Manual movement pauses automation. Manual clicking cancels auto click.",
@@ -781,7 +793,7 @@ private enum L {
             "clicks": "点击数", "reset": "重置", "notSet": "未设置",
             "system": "系统", "light": "浅色", "dark": "深色",
             "left": "左键", "right": "右键", "natural": "自然", "smart": "智能", "subtle": "轻微",
-            "timer": "定时停止", "batteryProtection": "低电量暂停",
+            "timer": "定时停止", "keepAwake": "保持清醒", "batteryProtection": "低电量暂停",
             "batteryThreshold": "阈值", "battery": "电量", "charging": "充电中", "unknown": "未知",
             "stateIdle": "空闲", "stateUserActive": "用户活跃", "stateMicro": "微操作", "stateNavigating": "导航", "stateReading": "阅读", "stateThinking": "思考",
             "footer": "手动移动会暂停自动化；手动点击会取消自动点击。",
@@ -804,7 +816,7 @@ private enum L {
             "clicks": "クリック数", "reset": "リセット", "notSet": "未設定",
             "system": "システム", "light": "ライト", "dark": "ダーク",
             "left": "左", "right": "右", "natural": "自然", "smart": "スマート", "subtle": "控えめ",
-            "timer": "停止タイマー", "batteryProtection": "低電力で一時停止",
+            "timer": "停止タイマー", "keepAwake": "スリープ防止", "batteryProtection": "低電力で一時停止",
             "batteryThreshold": "しきい値", "battery": "バッテリー", "charging": "充電中", "unknown": "不明",
             "stateIdle": "アイドル", "stateUserActive": "ユーザー操作中", "stateMicro": "マイクロ", "stateNavigating": "ナビゲート", "stateReading": "閲覧", "stateThinking": "思考",
             "footer": "手動移動で自動化を一時停止します。手動クリックで自動クリックを解除します。",
