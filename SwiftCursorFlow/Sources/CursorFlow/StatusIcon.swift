@@ -14,9 +14,6 @@ enum StatusIcon {
         if status.movement {
             drawMotionLines()
         }
-        if status.keepAwake {
-            drawCoffeeCup()
-        }
 
         image.unlockFocus()
         image.isTemplate = true
@@ -60,54 +57,17 @@ enum StatusIcon {
     }
 
     private static func drawMotionLines() {
-        for (index, y) in [13.2, 9.2, 5.2].enumerated() {
+        for (index, points) in [
+            (NSPoint(x: 15.0, y: 14.0), NSPoint(x: 28.5, y: 10.8)),
+            (NSPoint(x: 15.0, y: 9.7), NSPoint(x: 30.0, y: 6.2)),
+            (NSPoint(x: 15.0, y: 5.4), NSPoint(x: 28.5, y: 2.2))
+        ].enumerated() {
             let path = NSBezierPath()
-            path.move(to: NSPoint(x: 15.0, y: y))
-            path.curve(
-                to: NSPoint(x: 27.0, y: y - 0.8),
-                controlPoint1: NSPoint(x: 18.6, y: y + 1.6),
-                controlPoint2: NSPoint(x: 23.0, y: y - 2.0)
-            )
+            path.move(to: points.0)
+            path.line(to: points.1)
             path.lineWidth = index == 1 ? 1.45 : 1.25
             path.lineCapStyle = .round
             path.stroke()
-        }
-    }
-
-    private static func drawCoffeeCup() {
-        let cup = NSBezierPath(roundedRect: NSRect(x: 28.2, y: 4.0, width: 6.2, height: 5.3), xRadius: 1.2, yRadius: 1.2)
-        cup.lineWidth = 1.15
-        cup.stroke()
-
-        let handle = NSBezierPath()
-        handle.move(to: NSPoint(x: 34.1, y: 7.8))
-        handle.curve(
-            to: NSPoint(x: 34.1, y: 5.2),
-            controlPoint1: NSPoint(x: 37.0, y: 7.8),
-            controlPoint2: NSPoint(x: 37.0, y: 5.2)
-        )
-        handle.lineWidth = 1.05
-        handle.lineCapStyle = .round
-        handle.stroke()
-
-        let plate = NSBezierPath()
-        plate.move(to: NSPoint(x: 28.0, y: 2.8))
-        plate.line(to: NSPoint(x: 34.9, y: 2.8))
-        plate.lineWidth = 1.0
-        plate.lineCapStyle = .round
-        plate.stroke()
-
-        for x in [29.4, 31.5, 33.6] {
-            let steam = NSBezierPath()
-            steam.move(to: NSPoint(x: x, y: 10.5))
-            steam.curve(
-                to: NSPoint(x: x + 0.3, y: 14.4),
-                controlPoint1: NSPoint(x: x + 1.0, y: 11.7),
-                controlPoint2: NSPoint(x: x - 0.6, y: 13.0)
-            )
-            steam.lineWidth = 0.8
-            steam.lineCapStyle = .round
-            steam.stroke()
         }
     }
 }
