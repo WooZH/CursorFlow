@@ -112,14 +112,6 @@ enum AppTheme: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-enum AppProfile: String, CaseIterable, Identifiable {
-    case meeting = "Meeting"
-    case reading = "Reading"
-    case focus = "Focus"
-
-    var id: String { rawValue }
-}
-
 struct BatteryStatus: Equatable {
     var percentage: Int?
     var isCharging: Bool

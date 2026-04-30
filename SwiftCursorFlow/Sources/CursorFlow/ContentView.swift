@@ -327,23 +327,6 @@ struct ContentView: View {
         VStack(spacing: 12) {
             section {
                 HStack {
-                    Label(t("profiles"), systemImage: "slider.horizontal.3")
-                    Spacer()
-                    HStack(spacing: 6) {
-                        ForEach(AppProfile.allCases) { profile in
-                            Button(profileLabel(profile)) {
-                                model.applyProfile(profile)
-                            }
-                            .buttonStyle(.plain)
-                            .glassControl(cornerRadius: 8)
-                            .focusable(false)
-                        }
-                    }
-                }
-            }
-
-            section {
-                HStack {
                     Label(t("keepAwake"), systemImage: "cup.and.saucer.fill")
                     Spacer()
                     Toggle("", isOn: binding(\.keepAwakeEnabled)).labelsHidden()
@@ -764,14 +747,6 @@ struct ContentView: View {
         button == .left ? t("left") : t("right")
     }
 
-    private func profileLabel(_ profile: AppProfile) -> String {
-        switch profile {
-        case .meeting: t("profileMeeting")
-        case .reading: t("profileReading")
-        case .focus: t("profileFocus")
-        }
-    }
-
     private func scheduleTimeRow(label: String, hour: Binding<Int>, minute: Binding<Int>, valueText: String) -> some View {
         HStack(spacing: 8) {
             Text(label)
@@ -914,7 +889,6 @@ private enum L {
             "system": "System", "light": "Light", "dark": "Dark",
             "left": "Left", "right": "Right", "natural": "Natural", "smart": "Smart", "subtle": "Subtle",
             "timer": "Stop after", "keepAwake": "Keep awake", "batteryProtection": "Pause on low battery",
-            "profiles": "Profiles", "profileMeeting": "Meeting", "profileReading": "Reading", "profileFocus": "Focus",
             "schedule": "Schedule", "from": "From", "to": "To", "off": "Off",
             "batteryThreshold": "Threshold", "battery": "Battery", "charging": "charging", "unknown": "Unknown",
             "stateIdle": "Idle", "stateUserActive": "User active", "stateMicro": "Micro", "stateNavigating": "Navigating", "stateReading": "Reading", "stateThinking": "Thinking",
@@ -939,7 +913,6 @@ private enum L {
             "system": "系统", "light": "浅色", "dark": "深色",
             "left": "左键", "right": "右键", "natural": "自然", "smart": "智能", "subtle": "轻微",
             "timer": "定时停止", "keepAwake": "保持清醒", "batteryProtection": "低电量暂停",
-            "profiles": "场景预设", "profileMeeting": "会议", "profileReading": "阅读", "profileFocus": "专注",
             "schedule": "定时保持", "from": "开始", "to": "结束", "off": "关闭",
             "batteryThreshold": "阈值", "battery": "电量", "charging": "充电中", "unknown": "未知",
             "stateIdle": "空闲", "stateUserActive": "用户活跃", "stateMicro": "微操作", "stateNavigating": "导航", "stateReading": "阅读", "stateThinking": "思考",
@@ -964,7 +937,6 @@ private enum L {
             "system": "システム", "light": "ライト", "dark": "ダーク",
             "left": "左", "right": "右", "natural": "自然", "smart": "スマート", "subtle": "控えめ",
             "timer": "停止タイマー", "keepAwake": "スリープ防止", "batteryProtection": "低電力で一時停止",
-            "profiles": "プリセット", "profileMeeting": "会議", "profileReading": "読書", "profileFocus": "集中",
             "schedule": "スケジュール", "from": "開始", "to": "終了", "off": "オフ",
             "batteryThreshold": "しきい値", "battery": "バッテリー", "charging": "充電中", "unknown": "不明",
             "stateIdle": "アイドル", "stateUserActive": "ユーザー操作中", "stateMicro": "マイクロ", "stateNavigating": "ナビゲート", "stateReading": "閲覧", "stateThinking": "思考",

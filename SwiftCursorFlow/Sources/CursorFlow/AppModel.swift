@@ -119,31 +119,6 @@ final class AppModel: ObservableObject {
         clickCount = 0
     }
 
-    func applyProfile(_ profile: AppProfile) {
-        switch profile {
-        case .meeting:
-            movementEnabled = false
-            clickEnabled = false
-            config.keepAwakeEnabled = true
-            config.startAfter = 5
-            setTimerEnabled(false)
-        case .reading:
-            movementEnabled = true
-            clickEnabled = false
-            config.keepAwakeEnabled = true
-            config.startAfter = 20
-            setTimerEnabled(false)
-        case .focus:
-            movementEnabled = true
-            clickEnabled = false
-            config.keepAwakeEnabled = true
-            config.startAfter = 10
-            config.timerHours = 1
-            config.timerMinutes = 0
-            setTimerEnabled(true)
-        }
-    }
-
     func toggleMovement() {
         movementEnabled.toggle()
     }
