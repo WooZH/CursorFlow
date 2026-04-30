@@ -335,12 +335,15 @@ struct ContentView: View {
                 }
 
                 HStack {
-                    Toggle(t("schedule"), isOn: scheduleEnabledBinding)
-                        .focusable(false)
+                    Label(t("schedule"), systemImage: "calendar")
+                        .foregroundStyle(Color.primary.opacity(0.90))
                     Spacer()
                     Text(scheduleStatusText)
                         .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(.secondary)
+                    Toggle("", isOn: scheduleEnabledBinding).labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: accent))
+                        .focusable(false)
                 }
 
                 scheduleTimeRow(
@@ -357,8 +360,14 @@ struct ContentView: View {
                     valueText: "\(twoDigits(model.config.scheduleEndHour)):\(twoDigits(model.config.scheduleEndMinute))"
                 )
 
-                Toggle(t("batteryProtection"), isOn: binding(\.batteryProtectionEnabled))
-                    .focusable(false)
+                HStack {
+                    Label(t("batteryProtection"), systemImage: "battery.25")
+                        .foregroundStyle(Color.primary.opacity(0.90))
+                    Spacer()
+                    Toggle("", isOn: binding(\.batteryProtectionEnabled)).labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: accent))
+                        .focusable(false)
+                }
 
                 HStack {
                     Text(t("batteryThreshold"))
