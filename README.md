@@ -14,6 +14,7 @@ CursorFlow is built with SwiftUI + AppKit. It runs from the menu bar, uses a nat
 - Start-after idle delay
 - Stop-after countdown timer
 - Keep-awake mode to prevent idle sleep while automation is active
+- Menu bar A/C/E status badges for movement, click, and keep-awake
 - Low battery protection
 - English, Chinese, and Japanese UI
 - Native template menu bar icon
@@ -71,6 +72,7 @@ CursorFlow 使用 SwiftUI + AppKit 构建。它运行在菜单栏中，提供 ma
 - 支持闲置后开始
 - 支持倒计时停止
 - 支持保持清醒，自动化运行时防止系统空闲睡眠
+- 菜单栏使用 A/C/E 标识鼠标移动、自动点击和保持清醒状态
 - 支持低电量保护
 - 支持英文、中文、日文界面
 - 原生模板菜单栏图标，可适配系统深浅色

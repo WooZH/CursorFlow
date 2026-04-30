@@ -2,6 +2,16 @@ import AppKit
 import Combine
 import IOKit.pwr_mgt
 
+struct AutomationStatus: Equatable {
+    var movement: Bool
+    var click: Bool
+    var keepAwake: Bool
+
+    var active: Bool {
+        movement || click || keepAwake
+    }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var config: AppConfig {
@@ -30,7 +40,7 @@ final class AppModel: ObservableObject {
     @Published var batteryStatus = BatteryStatus(percentage: nil, isCharging: true)
     @Published var timerRemaining: TimeInterval?
 
-    var onStatusChanged: ((Bool) -> Void)?
+    var onStatusChanged: ((AutomationStatus) -> Void)?
     var onThemeChanged: ((NSAppearance?) -> Void)?
     var onPositionCaptureStarted: (() -> Void)?
     var onPositionCaptureFinished: (() -> Void)?
@@ -319,13 +329,18 @@ final class AppModel: ObservableObject {
     }
 
     private func updateStatusIcon() {
-        let active = movementEnabled || clickEnabled || config.keepAwakeEnabled
+        let status = AutomationStatus(
+            movement: movementEnabled,
+            click: clickEnabled,
+            keepAwake: config.keepAwakeEnabled
+        )
+        let active = status.active
         if active, automationStartedAt == nil {
             automationStartedAt = Date()
         } else if !active {
             automationStartedAt = nil
         }
-        onStatusChanged?(active)
+        onStatusChanged?(status)
     }
 
     private func updatePowerAssertion() {

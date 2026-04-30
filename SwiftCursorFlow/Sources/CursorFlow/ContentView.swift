@@ -144,7 +144,15 @@ struct ContentView: View {
             }
         } label: {
             HStack(spacing: tab == item ? 6 : 0) {
-                Image(systemName: icon)
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: icon)
+                    if tab != item, tabStatusActive(item) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 5.5, height: 5.5)
+                            .offset(x: 5, y: -4)
+                    }
+                }
                 if tab == item {
                     Text(tabTitle(item))
                         .transition(.opacity.combined(with: .move(edge: .trailing)))
@@ -160,7 +168,7 @@ struct ContentView: View {
                         .fill(tab == item ? accent.opacity(0.12) : Color.clear)
                         .animation(.easeInOut(duration: 0.24), value: tab)
                 )
-                .foregroundStyle(tab == item ? accent : Color.primary.opacity(0.86))
+                .foregroundStyle(tabForeground(item))
         }
         .buttonStyle(.plain)
         .focusable(false)
@@ -621,6 +629,23 @@ struct ContentView: View {
         case .click: t("clickTab")
         case .options: t("optionsTab")
         }
+    }
+
+    private func tabStatusActive(_ tab: PanelTab) -> Bool {
+        switch tab {
+        case .automation:
+            return model.movementEnabled
+        case .click:
+            return model.clickEnabled
+        case .options:
+            return model.config.keepAwakeEnabled
+        }
+    }
+
+    private func tabForeground(_ item: PanelTab) -> Color {
+        if tab == item { return accent }
+        if tabStatusActive(item) { return .green }
+        return Color.primary.opacity(0.86)
     }
 
     private var themeIconName: String {

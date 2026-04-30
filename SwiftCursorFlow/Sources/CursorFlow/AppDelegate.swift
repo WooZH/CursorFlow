@@ -19,14 +19,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.statusItem = statusItem
-        statusItem.button?.image = StatusIcon.make(active: false)
+        statusItem.length = 46
+        statusItem.button?.image = StatusIcon.make(status: AutomationStatus(movement: false, click: false, keepAwake: false))
         statusItem.button?.image?.isTemplate = true
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover)
 
-        model.onStatusChanged = { [weak self] active in
+        model.onStatusChanged = { [weak self] status in
             DispatchQueue.main.async {
-                self?.statusItem?.button?.image = StatusIcon.make(active: active)
+                self?.statusItem?.button?.image = StatusIcon.make(status: status)
                 self?.statusItem?.button?.image?.isTemplate = true
             }
         }
