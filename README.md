@@ -26,6 +26,15 @@ CursorFlow is built with SwiftUI + AppKit. It runs from the menu bar, uses a nat
 - macOS 14 or later
 - Accessibility permission for mouse movement and clicking
 
+## Download & Install
+
+1. Download the latest `CursorFlow-v1.1.0-macOS.zip` from the [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) page.
+2. Unzip the file and move `CursorFlow.app` to your `Applications` folder.
+3. Open `CursorFlow.app`. The app runs from the macOS menu bar.
+4. Grant Accessibility permission when prompted, or enable it manually in `System Settings > Privacy & Security > Accessibility`.
+
+If macOS blocks the app because it was downloaded from the internet, open `System Settings > Privacy & Security` and choose `Open Anyway`.
+
 ## Build
 
 ```bash
@@ -85,6 +94,15 @@ CursorFlow 使用 SwiftUI + AppKit 构建。它运行在菜单栏中，提供 ma
 
 - macOS 14 或更高版本
 - 需要授予辅助功能权限，才能移动鼠标和执行点击
+
+## 下载与安装
+
+1. 前往 [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) 下载最新的 `CursorFlow-v1.1.0-macOS.zip`。
+2. 解压后，将 `CursorFlow.app` 移动到 `Applications` 文件夹。
+3. 打开 `CursorFlow.app`，应用会运行在 macOS 菜单栏中。
+4. 根据提示授予辅助功能权限，或手动前往 `系统设置 > 隐私与安全性 > 辅助功能` 开启。
+
+如果 macOS 因为应用来自互联网而阻止打开，请前往 `系统设置 > 隐私与安全性`，选择 `仍要打开`。
 
 ## 构建
 
