@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.statusItem = statusItem
-        statusItem.length = 40
+        statusItem.length = 26
         statusItem.button?.image = StatusIcon.make(status: model.currentStatus)
         statusItem.button?.image?.isTemplate = true
         statusItem.button?.toolTip = model.statusTooltip
