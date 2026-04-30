@@ -396,7 +396,7 @@ struct ContentView: View {
                 .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .center)
             HStack(spacing: 4) {
-                Text("v1.0.0 ·")
+                Text("v1.1.0 ·")
                 Button("WooZH") {
                     NSWorkspace.shared.open(URL(string: "https://github.com/WooZH")!)
                 }

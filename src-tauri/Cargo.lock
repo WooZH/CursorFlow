@@ -479,7 +479,7 @@ dependencies = [
 
 [[package]]
 name = "cursor-flow"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "objc",
  "rand 0.8.6",
