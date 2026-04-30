@@ -327,12 +327,52 @@ struct ContentView: View {
         VStack(spacing: 12) {
             section {
                 HStack {
+                    Label(t("profiles"), systemImage: "slider.horizontal.3")
+                    Spacer()
+                    HStack(spacing: 6) {
+                        ForEach(AppProfile.allCases) { profile in
+                            Button(profileLabel(profile)) {
+                                model.applyProfile(profile)
+                            }
+                            .buttonStyle(.plain)
+                            .glassControl(cornerRadius: 8)
+                            .focusable(false)
+                        }
+                    }
+                }
+            }
+
+            section {
+                HStack {
                     Label(t("keepAwake"), systemImage: "cup.and.saucer.fill")
                     Spacer()
                     Toggle("", isOn: binding(\.keepAwakeEnabled)).labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: accent))
                         .focusable(false)
                 }
+
+                HStack {
+                    Toggle(t("schedule"), isOn: scheduleEnabledBinding)
+                        .focusable(false)
+                    Spacer()
+                    Text(scheduleStatusText)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+
+                scheduleTimeRow(
+                    label: t("from"),
+                    hour: scheduleStartHourBinding,
+                    minute: scheduleStartMinuteBinding,
+                    valueText: "\(twoDigits(model.config.scheduleStartHour)):\(twoDigits(model.config.scheduleStartMinute))"
+                )
+
+                scheduleTimeRow(
+                    label: t("to"),
+                    hour: scheduleEndHourBinding,
+                    minute: scheduleEndMinuteBinding,
+                    valueText: "\(twoDigits(model.config.scheduleEndHour)):\(twoDigits(model.config.scheduleEndMinute))"
+                )
 
                 Toggle(t("batteryProtection"), isOn: binding(\.batteryProtectionEnabled))
                     .focusable(false)
@@ -562,7 +602,7 @@ struct ContentView: View {
     }
 
     private var appActive: Bool {
-        model.movementEnabled || model.clickEnabled || model.config.keepAwakeEnabled
+        model.movementEnabled || model.clickEnabled || model.config.keepAwakeEnabled || model.scheduleKeepAwakeActive
     }
 
     private var clickToggleBinding: Binding<Bool> {
@@ -605,6 +645,52 @@ struct ContentView: View {
         }
     }
 
+    private var scheduleEnabledBinding: Binding<Bool> {
+        Binding {
+            model.config.scheduleEnabled
+        } set: { enabled in
+            model.setScheduleEnabled(enabled)
+        }
+    }
+
+    private var scheduleStartHourBinding: Binding<Int> {
+        Binding {
+            model.config.scheduleStartHour
+        } set: { hour in
+            model.updateScheduleStartHour(hour)
+        }
+    }
+
+    private var scheduleStartMinuteBinding: Binding<Int> {
+        Binding {
+            model.config.scheduleStartMinute
+        } set: { minute in
+            model.updateScheduleStartMinute(minute)
+        }
+    }
+
+    private var scheduleEndHourBinding: Binding<Int> {
+        Binding {
+            model.config.scheduleEndHour
+        } set: { hour in
+            model.updateScheduleEndHour(hour)
+        }
+    }
+
+    private var scheduleEndMinuteBinding: Binding<Int> {
+        Binding {
+            model.config.scheduleEndMinute
+        } set: { minute in
+            model.updateScheduleEndMinute(minute)
+        }
+    }
+
+    private var scheduleStatusText: String {
+        guard model.config.scheduleEnabled else { return t("off") }
+        if model.scheduleKeepAwakeActive { return t("active") }
+        return "\(twoDigits(model.config.scheduleStartHour)):\(twoDigits(model.config.scheduleStartMinute))-\(twoDigits(model.config.scheduleEndHour)):\(twoDigits(model.config.scheduleEndMinute))"
+    }
+
     private var preferredColorScheme: ColorScheme? {
         switch model.config.theme {
         case .system:
@@ -639,7 +725,7 @@ struct ContentView: View {
         case .click:
             return model.clickEnabled
         case .options:
-            return model.config.keepAwakeEnabled
+            return model.config.keepAwakeEnabled || model.scheduleKeepAwakeActive
         }
     }
 
@@ -675,6 +761,36 @@ struct ContentView: View {
 
     private func localizedButton(_ button: MouseButton) -> String {
         button == .left ? t("left") : t("right")
+    }
+
+    private func profileLabel(_ profile: AppProfile) -> String {
+        switch profile {
+        case .meeting: t("profileMeeting")
+        case .reading: t("profileReading")
+        case .focus: t("profileFocus")
+        }
+    }
+
+    private func scheduleTimeRow(label: String, hour: Binding<Int>, minute: Binding<Int>, valueText: String) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(valueText)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .frame(width: 44, alignment: .trailing)
+            Stepper("h", value: hour, in: 0...23)
+                .labelsHidden()
+                .focusable(false)
+            Stepper("m", value: minute, in: 0...59, step: 5)
+                .labelsHidden()
+                .focusable(false)
+        }
+    }
+
+    private func twoDigits(_ value: Int) -> String {
+        String(format: "%02d", value)
     }
 
     private func languageShortLabel(_ language: AppLanguage) -> String {
@@ -797,6 +913,8 @@ private enum L {
             "system": "System", "light": "Light", "dark": "Dark",
             "left": "Left", "right": "Right", "natural": "Natural", "smart": "Smart", "subtle": "Subtle",
             "timer": "Stop after", "keepAwake": "Keep awake", "batteryProtection": "Pause on low battery",
+            "profiles": "Profiles", "profileMeeting": "Meeting", "profileReading": "Reading", "profileFocus": "Focus",
+            "schedule": "Schedule", "from": "From", "to": "To", "off": "Off",
             "batteryThreshold": "Threshold", "battery": "Battery", "charging": "charging", "unknown": "Unknown",
             "stateIdle": "Idle", "stateUserActive": "User active", "stateMicro": "Micro", "stateNavigating": "Navigating", "stateReading": "Reading", "stateThinking": "Thinking",
             "footer": "Manual movement pauses automation. Manual clicking cancels auto click.",
@@ -820,6 +938,8 @@ private enum L {
             "system": "系统", "light": "浅色", "dark": "深色",
             "left": "左键", "right": "右键", "natural": "自然", "smart": "智能", "subtle": "轻微",
             "timer": "定时停止", "keepAwake": "保持清醒", "batteryProtection": "低电量暂停",
+            "profiles": "场景预设", "profileMeeting": "会议", "profileReading": "阅读", "profileFocus": "专注",
+            "schedule": "定时保持", "from": "开始", "to": "结束", "off": "关闭",
             "batteryThreshold": "阈值", "battery": "电量", "charging": "充电中", "unknown": "未知",
             "stateIdle": "空闲", "stateUserActive": "用户活跃", "stateMicro": "微操作", "stateNavigating": "导航", "stateReading": "阅读", "stateThinking": "思考",
             "footer": "手动移动会暂停自动化；手动点击会取消自动点击。",
@@ -843,6 +963,8 @@ private enum L {
             "system": "システム", "light": "ライト", "dark": "ダーク",
             "left": "左", "right": "右", "natural": "自然", "smart": "スマート", "subtle": "控えめ",
             "timer": "停止タイマー", "keepAwake": "スリープ防止", "batteryProtection": "低電力で一時停止",
+            "profiles": "プリセット", "profileMeeting": "会議", "profileReading": "読書", "profileFocus": "集中",
+            "schedule": "スケジュール", "from": "開始", "to": "終了", "off": "オフ",
             "batteryThreshold": "しきい値", "battery": "バッテリー", "charging": "充電中", "unknown": "不明",
             "stateIdle": "アイドル", "stateUserActive": "ユーザー操作中", "stateMicro": "マイクロ", "stateNavigating": "ナビゲート", "stateReading": "閲覧", "stateThinking": "思考",
             "footer": "手動移動で自動化を一時停止します。手動クリックで自動クリックを解除します。",

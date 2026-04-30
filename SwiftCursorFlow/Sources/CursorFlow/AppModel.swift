@@ -39,6 +39,12 @@ final class AppModel: ObservableObject {
     @Published var cognitiveState = "Idle"
     @Published var batteryStatus = BatteryStatus(percentage: nil, isCharging: true)
     @Published var timerRemaining: TimeInterval?
+    @Published var scheduleKeepAwakeActive = false {
+        didSet {
+            updatePowerAssertion()
+            updateStatusIcon()
+        }
+    }
 
     var onStatusChanged: ((AutomationStatus) -> Void)?
     var onThemeChanged: ((NSAppearance?) -> Void)?
@@ -70,6 +76,8 @@ final class AppModel: ObservableObject {
             Task { @MainActor in self?.tick() }
         }
         RunLoop.main.add(tickTimer!, forMode: .common)
+        updateScheduleState()
+        updatePowerAssertion()
     }
 
     deinit {
@@ -111,6 +119,43 @@ final class AppModel: ObservableObject {
         clickCount = 0
     }
 
+    func applyProfile(_ profile: AppProfile) {
+        switch profile {
+        case .meeting:
+            movementEnabled = false
+            clickEnabled = false
+            config.keepAwakeEnabled = true
+            config.startAfter = 5
+            setTimerEnabled(false)
+        case .reading:
+            movementEnabled = true
+            clickEnabled = false
+            config.keepAwakeEnabled = true
+            config.startAfter = 20
+            setTimerEnabled(false)
+        case .focus:
+            movementEnabled = true
+            clickEnabled = false
+            config.keepAwakeEnabled = true
+            config.startAfter = 10
+            config.timerHours = 1
+            config.timerMinutes = 0
+            setTimerEnabled(true)
+        }
+    }
+
+    func toggleMovement() {
+        movementEnabled.toggle()
+    }
+
+    func toggleClick() {
+        clickEnabled = !clickEnabled && config.clickPosition != nil
+    }
+
+    func toggleKeepAwake() {
+        config.keepAwakeEnabled.toggle()
+    }
+
     func setTimerEnabled(_ enabled: Bool) {
         config.timerEnabled = enabled
         stopTimerStartedAt = enabled ? Date() : nil
@@ -127,6 +172,31 @@ final class AppModel: ObservableObject {
         resetStopTimerIfNeeded()
     }
 
+    func setScheduleEnabled(_ enabled: Bool) {
+        config.scheduleEnabled = enabled
+        updateScheduleState()
+    }
+
+    func updateScheduleStartHour(_ hour: Int) {
+        config.scheduleStartHour = hour
+        updateScheduleState()
+    }
+
+    func updateScheduleStartMinute(_ minute: Int) {
+        config.scheduleStartMinute = minute
+        updateScheduleState()
+    }
+
+    func updateScheduleEndHour(_ hour: Int) {
+        config.scheduleEndHour = hour
+        updateScheduleState()
+    }
+
+    func updateScheduleEndMinute(_ minute: Int) {
+        config.scheduleEndMinute = minute
+        updateScheduleState()
+    }
+
     func applyTheme() {
         let appearance = appearanceForCurrentTheme()
         NSApp.appearance = appearance
@@ -141,6 +211,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    var currentStatus: AutomationStatus {
+        AutomationStatus(
+            movement: movementEnabled,
+            click: clickEnabled,
+            keepAwake: effectiveKeepAwake
+        )
+    }
+
     private func tick() {
         accessibilityGranted = MouseController.accessibilityGranted()
         if Date().timeIntervalSince(lastBatteryPoll) > 30 {
@@ -148,6 +226,7 @@ final class AppModel: ObservableObject {
             lastBatteryPoll = Date()
         }
         observeUserActivity()
+        updateScheduleState()
         enforceTimer()
 
         if shouldPauseForBattery() {
@@ -333,11 +412,7 @@ final class AppModel: ObservableObject {
     }
 
     private func updateStatusIcon() {
-        let status = AutomationStatus(
-            movement: movementEnabled,
-            click: clickEnabled,
-            keepAwake: config.keepAwakeEnabled
-        )
+        let status = currentStatus
         let active = status.active
         if active, automationStartedAt == nil {
             automationStartedAt = Date()
@@ -348,7 +423,7 @@ final class AppModel: ObservableObject {
     }
 
     private func updatePowerAssertion() {
-        let shouldStayAwake = movementEnabled || clickEnabled || config.keepAwakeEnabled
+        let shouldStayAwake = movementEnabled || clickEnabled || effectiveKeepAwake
         if shouldStayAwake {
             createPowerAssertionIfNeeded(
                 type: kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
@@ -360,6 +435,44 @@ final class AppModel: ObservableObject {
             )
         } else {
             releasePowerAssertions()
+        }
+    }
+
+    var statusTooltip: String {
+        var parts: [String] = []
+        parts.append(movementEnabled ? "Movement on" : "Movement off")
+        parts.append(clickEnabled ? "Click on" : "Click off")
+        if scheduleKeepAwakeActive {
+            parts.append("Awake on (schedule)")
+        } else {
+            parts.append(effectiveKeepAwake ? "Awake on" : "Awake off")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private var effectiveKeepAwake: Bool {
+        config.keepAwakeEnabled || scheduleKeepAwakeActive
+    }
+
+    private func updateScheduleState() {
+        guard config.scheduleEnabled else {
+            if scheduleKeepAwakeActive {
+                scheduleKeepAwakeActive = false
+            }
+            return
+        }
+
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.hour, .minute], from: Date())
+        let now = (components.hour ?? 0) * 60 + (components.minute ?? 0)
+        let start = max(0, min(23, config.scheduleStartHour)) * 60 + max(0, min(59, config.scheduleStartMinute))
+        let end = max(0, min(23, config.scheduleEndHour)) * 60 + max(0, min(59, config.scheduleEndMinute))
+        let active = start <= end
+            ? now >= start && now < end
+            : now >= start || now < end
+
+        if scheduleKeepAwakeActive != active {
+            scheduleKeepAwakeActive = active
         }
     }
 
