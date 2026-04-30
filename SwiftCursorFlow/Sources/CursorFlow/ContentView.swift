@@ -481,8 +481,9 @@ struct ContentView: View {
     private func headerIconButton(_ systemName: String, help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 22, weight: .regular))
-                .frame(width: 28, height: 28)
+                .font(.system(size: 18, weight: .regular))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
