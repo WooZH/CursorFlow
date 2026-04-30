@@ -65,7 +65,7 @@ struct ContentView: View {
         HStack {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text("CursorFlow")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 21, weight: .bold))
                 statusPill(appActive ? t("active") : t("idle"), active: appActive)
             }
             Spacer()
@@ -522,12 +522,13 @@ struct ContentView: View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 18, weight: .regular))
-                .symbolRenderingMode(.hierarchical)
+                .symbolRenderingMode(.monochrome)
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .foregroundStyle(Color.primary.opacity(0.78))
         .help(help)
     }
 
