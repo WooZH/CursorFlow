@@ -1,0 +1,25 @@
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.build/
+SwiftCursorFlow/.build/
+src-tauri/target/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS app signing / packaged output
+*.dmg
+*.pkg
+
+# Editor
+.vscode/
+.idea/

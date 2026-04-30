@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CursorFlow</title>
+<style>
+/* ── Themes ─────────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --shell-bg:       rgba(18, 16, 26, 0.93);
+  --card-bg:        rgba(255,255,255,0.05);
+  --card-border:    rgba(255,255,255,0.08);
+  --card-active-bg: rgba(192,132,252,0.09);
+  --card-active-bd: rgba(192,132,252,0.32);
+  --text:           #f2f0f8;
+  --text-2:         rgba(242,240,248,0.46);
+  --text-3:         rgba(242,240,248,0.26);
+  --input-bg:       rgba(255,255,255,0.07);
+  --input-border:   rgba(255,255,255,0.10);
+  --hover:          rgba(255,255,255,0.04);
+  --divider:        rgba(255,255,255,0.07);
+  --shell-border:   rgba(255,255,255,0.08);
+  --quit-bg:        rgba(248,113,113,0.07);
+  --quit-bd:        rgba(248,113,113,0.14);
+  --quit-hover:     rgba(248,113,113,0.15);
+  --toggle-knob:    white;
+}
+
+:root[data-theme="light"] {
+  --shell-bg:       rgba(248, 246, 255, 0.92);
+  --card-bg:        rgba(255,255,255,0.65);
+  --card-border:    rgba(0,0,0,0.05);
+  --card-active-bg: rgba(124,58,237,0.05);
+  --card-active-bd: rgba(124,58,237,0.20);
+  --text:           #1e1b2e;
+  --text-2:         rgba(30,27,46,0.46);
+  --text-3:         rgba(30,27,46,0.26);
+  --input-bg:       rgba(0,0,0,0.04);
+  --input-border:   rgba(0,0,0,0.08);
+  --hover:          rgba(0,0,0,0.025);
+  --divider:        rgba(0,0,0,0.06);
+  --shell-border:   rgba(0,0,0,0.07);
+  --quit-bg:        rgba(220,38,38,0.05);
+  --quit-bd:        rgba(220,38,38,0.12);
+  --quit-hover:     rgba(220,38,38,0.10);
+  --toggle-knob:    white;
+}
+
+/* ── Accent — violet ─────────────────────────────────────────────────────────── */
+:root {
+  --accent-light: #7c3aed;   /* violet-600, used in light mode */
+  --accent-dark:  #c084fc;   /* purple-400, used in dark mode  */
+  --green:   #34d399;
+  --red:     #f87171;
+  --orange:  #fb923c;
+  --radius:    14px;
+  --radius-sm:  8px;
+}
+:root[data-theme="dark"]  { --accent-effective: var(--accent-dark); }
+:root[data-theme="light"] { --accent-effective: var(--accent-light); }
+
+/* ── Reset ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html {
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  background: transparent;
+  color: var(--text);
+  overflow: hidden;
+  width: 380px;
+  height: 780px;
+}
+
+/* ── App shell — NO border-radius; macOS clips the window corners itself ──────── */
+.app-shell {
+  width: 380px;
+  height: 780px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--shell-bg);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  transition: background 0.25s;
+}
+
+/* ── Drag region ─────────────────────────────────────────────────────────────── */
+.drag-region {
+  height: 40px;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────── */
+.header {
+  padding: 0 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: drag;
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  flex: 1;
+  color: var(--text);
+}
+.header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+.pro-badge {
+  display: none;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  color: #1a1a1a;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  align-items: center;
+}
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  line-height: 1;
+}
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ── PRO banner ──────────────────────────────────────────────────────────────── */
+.pro-banner {
+  display: none;
+  margin: 0 14px 10px;
+  padding: 8px 14px;
+  background: rgba(52,211,153,0.10);
+  border: 1px solid rgba(52,211,153,0.28);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--green);
+  text-align: center;
+}
+
+/* ── Scroll area ─────────────────────────────────────────────────────────────── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+  -webkit-app-region: no-drag;
+}
+.scroll::-webkit-scrollbar { width: 0; }
+
+/* ── Feature card ────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: background 0.2s, border-color 0.2s;
+}
+.card.active {
+  background: var(--card-active-bg);
+  border-color: var(--card-active-bd);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  padding: 13px 14px;
+  gap: 11px;
+}
+.card-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  background: var(--input-bg);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.card.active .card-icon { background: rgba(59,130,246,0.15); }
+
+.card-info { flex: 1; min-width: 0; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-sub { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+
+/* ── Toggle ──────────────────────────────────────────────────────────────────── */
+.toggle {
+  position: relative;
+  width: 42px; height: 24px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: none; outline: none; cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+.toggle.on { background: var(--accent-effective); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  border-radius: 10px;
+  background: var(--toggle-knob);
+  top: 2px; left: 2px;
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+.toggle.on::after { transform: translateX(18px); }
+
+/* ── Card divider / body ─────────────────────────────────────────────────────── */
+.card-div { height: 1px; background: var(--divider); margin: 0 14px 8px; }
+.card-body { padding: 0 14px 12px; display: flex; flex-direction: column; gap: 1px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  gap: 10px;
+}
+.row-label { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+.row-val { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+/* ── Pill group ──────────────────────────────────────────────────────────────── */
+.pills { display: flex; gap: 3px; flex-wrap: wrap; }
+.pill {
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11.5px; font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--text-2);
+  transition: all 0.12s;
+  outline: none;
+}
+.pill:hover { background: var(--hover); color: var(--text); }
+.pill.on { background: var(--accent-effective); border-color: var(--accent-effective); color: #fff; }
+
+/* ── Number input ────────────────────────────────────────────────────────────── */
+.num {
+  width: 50px; padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 13px;
+  text-align: center; outline: none;
+  -moz-appearance: textfield;
+}
+.num::-webkit-inner-spin-button,
+.num::-webkit-outer-spin-button { -webkit-appearance: none; }
+.num:focus { border-color: var(--accent-effective); }
+.unit { font-size: 11.5px; color: var(--text-2); }
+
+/* ── PRO lock badge ──────────────────────────────────────────────────────────── */
+.pro-lock {
+  font-size: 10px; font-weight: 600;
+  color: var(--orange);
+  background: rgba(251,146,60,0.10);
+  border: 1px solid rgba(251,146,60,0.22);
+  padding: 1px 5px; border-radius: 8px;
+  vertical-align: middle; margin-left: 3px;
+}
+
+/* ── Position display / capture btn ─────────────────────────────────────────── */
+.pos-display {
+  font-size: 11.5px; color: var(--text-2);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  padding: 4px 9px; border-radius: var(--radius-sm);
+  min-width: 68px; text-align: center;
+}
+.pos-display.set { color: var(--accent-effective); border-color: var(--accent-effective); }
+
+.btn {
+  padding: 4px 11px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; outline: none;
+  transition: all 0.12s; white-space: nowrap;
+  border: 1px solid var(--card-border);
+  background: var(--input-bg);
+  color: var(--text-2);
+}
+.btn:hover { background: var(--hover); color: var(--text); }
+.btn.primary {
+  background: rgba(192,132,252,0.10);
+  border-color: rgba(192,132,252,0.28);
+  color: var(--accent-effective);
+}
+.btn.primary:hover { background: rgba(192,132,252,0.20); }
+.btn.capturing {
+  background: rgba(251,146,60,0.10);
+  border-color: rgba(251,146,60,0.28);
+  color: var(--orange);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.55} }
+
+/* ── Test btn ────────────────────────────────────────────────────────────────── */
+.test-row {
+  margin-top: 4px;
+}
+.btn-test {
+  width: 100%;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; outline: none;
+  border: 1px dashed var(--card-border);
+  background: transparent;
+  color: var(--text-3);
+  transition: all 0.12s;
+}
+.btn-test:hover { background: var(--hover); color: var(--text-2); }
+.btn-test.ok { color: var(--green); border-color: rgba(52,211,153,0.3); }
+.btn-test.fail { color: var(--red); border-color: rgba(248,113,113,0.3); }
+
+/* ── PRO section ─────────────────────────────────────────────────────────────── */
+.pro-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.pro-row {
+  display: flex; align-items: center;
+  padding: 11px 14px; gap: 10px;
+  cursor: pointer;
+}
+.pro-row:hover { background: var(--hover); }
+.pro-row-icon { font-size: 15px; width: 24px; text-align: center; }
+.pro-row-label { flex: 1; font-size: 13px; }
+.pro-row-hint { font-size: 11.5px; color: var(--text-2); }
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+.footer { padding: 0 12px 12px; }
+.quit-btn {
+  width: 100%; padding: 9px;
+  border-radius: var(--radius-sm);
+  background: var(--quit-bg);
+  border: 1px solid var(--quit-bd);
+  color: var(--red);
+  font-size: 13px; cursor: pointer;
+  transition: background 0.12s; outline: none;
+}
+.quit-btn:hover { background: var(--quit-hover); }
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
+.modal-bg {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.50);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--shell-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: 16px;
+  padding: 26px 22px 22px;
+  width: 300px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+.modal-title { font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 5px; }
+.modal-sub { font-size: 12px; color: var(--text-2); text-align: center; margin-bottom: 18px; }
+.modal-input {
+  width: 100%; padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 14px; outline: none;
+  text-align: center; letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.modal-input:focus { border-color: var(--accent-effective); }
+.modal-err { font-size: 12px; color: var(--red); text-align: center; height: 17px; margin-bottom: 10px; }
+.modal-btns { display: flex; gap: 8px; }
+.modal-btn {
+  flex: 1; padding: 9px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; outline: none;
+  transition: opacity 0.12s;
+}
+.modal-btn:hover { opacity: 0.84; }
+.modal-btn.cancel { background: var(--input-bg); color: var(--text); }
+.modal-btn.go { background: var(--accent-effective); color: #fff; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Traffic light drag region -->
+  <div class="drag-region"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">CursorFlow</div>
+    <div class="header-actions">
+      <span class="pro-badge" id="proBadge">PRO</span>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+    </div>
+  </div>
+
+  <!-- PRO banner -->
+  <div class="pro-banner" id="proBanner">✓ PRO Active — all features unlocked</div>
+
+  <!-- Scrollable content -->
+  <div class="scroll">
+
+    <!-- ── Mouse Movement ── -->
+    <div class="card" id="movCard">
+      <div class="card-head">
+        <div class="card-icon">🖱️</div>
+        <div class="card-info">
+          <div class="card-title">Mouse Movement</div>
+          <div class="card-sub" id="movSub">Inactive</div>
+        </div>
+        <button class="toggle" id="movToggle"></button>
+      </div>
+      <div class="card-div"></div>
+      <div class="card-body">
+        <div class="row">
+          <span class="row-label">Mode</span>
+          <div class="row-val">
+            <div class="pills" id="modeGroup">
+              <button class="pill on" data-mode="jitter">Jitter</button>
+              <button class="pill" data-mode="drift">Drift</button>
+              <button class="pill" data-mode="circle">Circle</button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Move every</span>
+          <div class="row-val">
+            <div class="pills" id="intervalGroup">
+              <button class="pill on" data-iv="1000">1s</button>
+              <button class="pill" data-iv="3000">3s</button>
+              <button class="pill" data-iv="5000">5s</button>
+              <button class="pill" data-iv="10000">10s</button>
+              <button class="pill" data-iv="30000">30s</button>
+              <button class="pill" data-iv="60000">1m</button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Start after idle</span>
+          <div class="row-val">
+            <input class="num" type="number" id="startAfterInput" min="0" max="600" value="5">
+            <span class="unit">sec</span>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Smart Motion <span class="pro-lock" id="smartLock">PRO</span></span>
+          <div class="row-val">
+            <button class="toggle" id="smartToggle"></button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Auto-stop <span class="pro-lock" id="timerLock">PRO</span></span>
+          <div class="row-val">
+            <input class="num" type="number" id="timerH" min="0" max="23" value="1">
+            <span class="unit">h</span>
+            <input class="num" type="number" id="timerM" min="0" max="59" value="0">
+            <span class="unit">m</span>
+            <button class="toggle" id="timerToggle"></button>
+          </div>
+        </div>
+        <div class="row test-row">
+          <button class="btn-test" id="testBtn">⚡ Test movement now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Auto Click ── -->
+    <div class="card" id="clkCard">
+      <div class="card-head">
+        <div class="card-icon">👆</div>
+        <div class="card-info">
+          <div class="card-title">Auto Click</div>
+          <div class="card-sub" id="clkSub">Inactive</div>
+        </div>
+        <button class="toggle" id="clkToggle"></button>
+      </div>
+      <div class="card-div"></div>
+      <div class="card-body">
+        <div class="row">
+          <span class="row-label">Button</span>
+          <div class="row-val">
+            <div class="pills" id="clickBtnGroup">
+              <button class="pill on" data-btn="Left">Left</button>
+              <button class="pill" data-btn="Right">Right</button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Target</span>
+          <div class="row-val">
+            <div class="pos-display" id="posDisplay">Not set</div>
+            <button class="btn primary" id="captureBtn">Set position</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Click every</span>
+          <div class="row-val">
+            <div class="pills" id="clkIntervalGroup">
+              <button class="pill" data-iv="3000">3s</button>
+              <button class="pill" data-iv="5000">5s</button>
+              <button class="pill on" data-iv="10000">10s</button>
+              <button class="pill" data-iv="30000">30s</button>
+              <button class="pill" data-iv="60000">1m</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRO section ── -->
+    <div class="pro-section" id="proSection">
+      <div class="pro-row" id="activateProBtn">
+        <span class="pro-row-icon">👑</span>
+        <span class="pro-row-label">Unlock PRO</span>
+        <span class="pro-row-hint">Enter code →</span>
+      </div>
+    </div>
+
+  </div><!-- .scroll -->
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="quit-btn" id="quitBtn">Quit CursorFlow</button>
+  </div>
+
+</div><!-- .app-shell -->
+
+<!-- PRO modal -->
+<div class="modal-bg" id="proModal">
+  <div class="modal">
+    <div class="modal-title">👑 Activate PRO</div>
+    <div class="modal-sub">Enter your activation code</div>
+    <input class="modal-input" id="proInput" type="text" placeholder="ENTER CODE" autocomplete="off" spellcheck="false">
+    <div class="modal-err" id="proErr"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="proCancel">Cancel</button>
+      <button class="modal-btn go" id="proGo">Activate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── State ─────────────────────────────────────────────────────────────────── */
+let movOn = false, clkOn = false, isPro = false;
+let cfg = {};
+let capturing = false, pendingClk = false;
+
+/* ── Theme ─────────────────────────────────────────────────────────────────── */
+const root = document.documentElement;
+const themeBtn = document.getElementById('themeBtn');
+
+function applyTheme(t) {
+  root.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '🌙' : '☀️';
+}
+
+themeBtn.addEventListener('click', () => {
+  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  cfg.theme = next;
+  window.api.setConfig('theme', next);
+});
+
+/* ── Boot ──────────────────────────────────────────────────────────────────── */
+async function init() {
+  cfg = await window.api.getConfig();
+
+  // Apply saved theme
+  applyTheme(cfg.theme || 'dark');
+
+  // UI state from config
+  selectPill(document.getElementById('modeGroup'), 'mode', cfg.movementMode || 'jitter');
+  selectPill(document.getElementById('intervalGroup'), 'iv', String(cfg.moveEvery || 10000));
+  selectPill(document.getElementById('clkIntervalGroup'), 'iv', String(cfg.moveEvery || 1000));
+  selectPill(document.getElementById('clickBtnGroup'), 'btn', cfg.clickButton || 'Left');
+  document.getElementById('startAfterInput').value = Math.round((cfg.startAfter || 5000) / 1000);
+  document.getElementById('timerH').value = cfg.timerHour || 1;
+  document.getElementById('timerM').value = cfg.timerMinute || 0;
+  setToggle(document.getElementById('timerToggle'), cfg.timerEnabled);
+  setToggle(document.getElementById('smartToggle'), cfg.smartMotion);
+  if (cfg.clickPosition) updatePosDisplay(cfg.clickPosition);
+
+  // Always start with both features OFF
+  setMovState(false);
+  setClkState(false);
+
+  if (cfg.isPro) goPro(false);
+
+  // Push events from main process
+  window.api.onMovementChanged(v => setMovState(v));
+  window.api.onClickChanged(v => setClkState(v));
+  window.api.onAutoStopped(() => { setMovState(false); setClkState(false); });
+  window.api.onConfigChanged((k, v) => {
+    cfg[k] = v;
+    if (k === 'movementMode') selectPill(document.getElementById('modeGroup'), 'mode', v);
+    if (k === 'moveEvery') {
+      selectPill(document.getElementById('intervalGroup'), 'iv', String(v));
+      selectPill(document.getElementById('clkIntervalGroup'), 'iv', String(v));
+    }
+  });
+  window.api.onCaptureDone(pos => {
+    capturing = false;
+    cfg.clickPosition = pos;
+    updatePosDisplay(pos);
+    setCaptureBtn(false);
+    if (pendingClk) { pendingClk = false; doEnableClk(); }
+  });
+  window.api.onCaptureCancelled(() => {
+    capturing = false; pendingClk = false;
+    setCaptureBtn(false);
+    if (!cfg.clickPosition) setClkState(false);
+  });
+}
+
+/* ── Card state ────────────────────────────────────────────────────────────── */
+function setMovState(on) {
+  movOn = on;
+  document.getElementById('movCard').classList.toggle('active', on);
+  setToggle(document.getElementById('movToggle'), on);
+  document.getElementById('movSub').textContent = on ? 'Active' : 'Inactive';
+}
+function setClkState(on) {
+  clkOn = on;
+  document.getElementById('clkCard').classList.toggle('active', on);
+  setToggle(document.getElementById('clkToggle'), on);
+  document.getElementById('clkSub').textContent = on ? 'Active' : 'Inactive';
+}
+function setToggle(el, on) { el.classList.toggle('on', !!on); }
+
+/* ── Movement toggle ───────────────────────────────────────────────────────── */
+document.getElementById('movToggle').addEventListener('click', () => {
+  const next = !movOn;
+  setMovState(next);
+  window.api.toggleMovement(next);
+});
+
+/* ── Click toggle ──────────────────────────────────────────────────────────── */
+document.getElementById('clkToggle').addEventListener('click', () => {
+  if (clkOn) {
+    setClkState(false);
+    window.api.toggleClick(false);
+  } else {
+    if (!cfg.clickPosition) {
+      // Show toggle as pending while waiting for position capture
+      setToggle(document.getElementById('clkToggle'), true);
+      document.getElementById('clkSub').textContent = 'Set position…';
+      pendingClk = true;
+      startCapture();
+    } else {
+      doEnableClk();
+    }
+  }
+});
+function doEnableClk() {
+  setClkState(true);
+  window.api.toggleClick(true);
+}
+
+/* ── Position capture ──────────────────────────────────────────────────────── */
+document.getElementById('captureBtn').addEventListener('click', () => {
+  if (capturing) { window.api.cancelCapture(); }
+  else startCapture();
+});
+function startCapture() {
+  capturing = true;
+  setCaptureBtn(true);
+  window.api.startPositionCapture();
+}
+function setCaptureBtn(on) {
+  const b = document.getElementById('captureBtn');
+  b.classList.toggle('capturing', on);
+  b.textContent = on ? 'Cancel' : 'Set position';
+}
+function updatePosDisplay(pos) {
+  const el = document.getElementById('posDisplay');
+  el.textContent = pos.x + ', ' + pos.y;
+  el.classList.add('set');
+}
+
+/* ── Test movement ─────────────────────────────────────────────────────────── */
+document.getElementById('testBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('testBtn');
+  btn.textContent = '⏳ Testing…';
+  btn.className = 'btn-test';
+  const ok = await window.api.testMovement();
+  btn.textContent = ok ? '✓ Mouse moved successfully!' : '✗ Failed — check System Preferences > Accessibility';
+  btn.className = 'btn-test ' + (ok ? 'ok' : 'fail');
+  setTimeout(() => {
+    btn.textContent = '⚡ Test movement now';
+    btn.className = 'btn-test';
+  }, 3000);
+});
+
+/* ── Pill helpers ──────────────────────────────────────────────────────────── */
+function selectPill(group, attr, value) {
+  if (!group) return;
+  group.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('on', p.dataset[attr] === String(value));
+  });
+}
+
+document.getElementById('modeGroup').addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if (!p) return;
+  cfg.movementMode = p.dataset.mode;
+  selectPill(document.getElementById('modeGroup'), 'mode', cfg.movementMode);
+  window.api.setConfig('movementMode', cfg.movementMode);
+});
+
+document.getElementById('intervalGroup').addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if (!p) return;
+  const ms = parseInt(p.dataset.iv);
+  cfg.moveEvery = ms;
+  selectPill(document.getElementById('intervalGroup'), 'iv', String(ms));
+  selectPill(document.getElementById('clkIntervalGroup'), 'iv', String(ms));
+  window.api.setConfig('moveEvery', ms);
+});
+
+document.getElementById('clkIntervalGroup').addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if (!p) return;
+  const ms = parseInt(p.dataset.iv);
+  cfg.moveEvery = ms;
+  selectPill(document.getElementById('intervalGroup'), 'iv', String(ms));
+  selectPill(document.getElementById('clkIntervalGroup'), 'iv', String(ms));
+  window.api.setConfig('moveEvery', ms);
+});
+
+document.getElementById('clickBtnGroup').addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if (!p) return;
+  cfg.clickButton = p.dataset.btn;
+  selectPill(document.getElementById('clickBtnGroup'), 'btn', cfg.clickButton);
+  window.api.setConfig('clickButton', cfg.clickButton);
+});
+
+/* ── Number inputs ─────────────────────────────────────────────────────────── */
+document.getElementById('startAfterInput').addEventListener('change', e => {
+  const s = Math.max(0, Math.min(600, parseInt(e.target.value) || 0));
+  e.target.value = s;
+  window.api.setConfig('startAfter', s * 1000);
+});
+document.getElementById('timerH').addEventListener('change', e => {
+  const h = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
+  e.target.value = h;
+  window.api.setConfig('timerHour', h);
+});
+document.getElementById('timerM').addEventListener('change', e => {
+  const m = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+  e.target.value = m;
+  window.api.setConfig('timerMinute', m);
+});
+
+/* ── PRO toggles ───────────────────────────────────────────────────────────── */
+document.getElementById('timerToggle').addEventListener('click', () => {
+  if (!isPro) { openProModal(); return; }
+  const v = !cfg.timerEnabled;
+  cfg.timerEnabled = v;
+  setToggle(document.getElementById('timerToggle'), v);
+  window.api.setConfig('timerEnabled', v);
+});
+document.getElementById('smartToggle').addEventListener('click', () => {
+  if (!isPro) { openProModal(); return; }
+  const v = !cfg.smartMotion;
+  cfg.smartMotion = v;
+  setToggle(document.getElementById('smartToggle'), v);
+  window.api.setConfig('smartMotion', v);
+});
+
+/* ── PRO modal ─────────────────────────────────────────────────────────────── */
+document.getElementById('activateProBtn').addEventListener('click', openProModal);
+function openProModal() {
+  document.getElementById('proModal').classList.add('show');
+  document.getElementById('proInput').value = '';
+  document.getElementById('proErr').textContent = '';
+  setTimeout(() => document.getElementById('proInput').focus(), 40);
+}
+document.getElementById('proCancel').addEventListener('click', () => {
+  document.getElementById('proModal').classList.remove('show');
+});
+document.getElementById('proGo').addEventListener('click', doActivate);
+document.getElementById('proInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doActivate();
+  if (e.key === 'Escape') document.getElementById('proModal').classList.remove('show');
+});
+async function doActivate() {
+  const res = await window.api.activatePro(document.getElementById('proInput').value);
+  if (res.success) {
+    document.getElementById('proModal').classList.remove('show');
+    goPro(true);
+  } else {
+    document.getElementById('proErr').textContent = res.error || 'Invalid code';
+  }
+}
+function goPro(banner) {
+  isPro = true;
+  document.getElementById('proBadge').style.display = 'inline-flex';
+  document.getElementById('smartLock').style.display = 'none';
+  document.getElementById('timerLock').style.display = 'none';
+  document.getElementById('proSection').style.display = 'none';
+  if (banner) {
+    const b = document.getElementById('proBanner');
+    b.style.display = 'block';
+    setTimeout(() => b.style.display = 'none', 3500);
+  }
+}
+
+/* ── Quit ──────────────────────────────────────────────────────────────────── */
+document.getElementById('quitBtn').addEventListener('click', () => window.api.quit());
+
+/* ── Go ────────────────────────────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>

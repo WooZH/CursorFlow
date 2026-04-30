@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Capture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw; height: 100vh;
+    background: transparent;
+    cursor: crosshair;
+    overflow: hidden;
+    -webkit-app-region: no-drag;
+    user-select: none;
+  }
+  .hint {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(18, 16, 26, 0.88);
+    border: 1.5px solid rgba(192, 132, 252, 0.5);
+    color: #e9d5ff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    padding: 18px 28px;
+    border-radius: 14px;
+    text-align: center;
+    pointer-events: none;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .hint small {
+    display: block;
+    margin-top: 6px;
+    color: rgba(233, 213, 255, 0.55);
+    font-size: 13px;
+    font-weight: 400;
+  }
+</style>
+</head>
+<body>
+<div class="hint">
+  Click to set click position
+  <small>Press Esc to cancel</small>
+</div>
+<script>
+  const { invoke } = window.__TAURI__.core;
+
+  document.addEventListener('click', (e) => {
+    invoke('capture_position', { x: e.screenX, y: e.screenY });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      invoke('cancel_capture');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CursorFlow</title>
+<style>
+/* ══════════════════════════════════════════
+   TOKENS — Light (default)
+══════════════════════════════════════════ */
+:root {
+  --bg-main:        #F5F5F7;
+  --bg-card:        #FFFFFF;
+  --bg-hover:       #F0F1F5;
+  --border:         #E5E7EB;
+  --text-primary:   #1C1C1E;
+  --text-secondary: #6B7280;
+  --text-muted:     #9CA3AF;
+  --accent:         #6366F1;
+  --accent-soft:    #EEF2FF;
+  --accent-hover:   #4F46E5;
+  --toggle-off:     #D1D5DB;
+  --success:        #22C55E;
+  --warning:        #F59E0B;
+  --danger:         #EF4444;
+  --shadow:         0 2px 12px rgba(0,0,0,0.06);
+  --shadow-card:    0 1px 4px rgba(0,0,0,0.05);
+  --r-card: 12px;
+  --r-btn:  8px;
+  --r-sm:   6px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --tr: 140ms ease;
+}
+/* ══════════════════════════════════════════
+   TOKENS — Dark
+══════════════════════════════════════════ */
+.dark {
+  --bg-main:        #1C1C1E;
+  --bg-card:        #2C2C2E;
+  --bg-hover:       #3A3A3C;
+  --border:         #3F3F46;
+  --text-primary:   #F5F5F7;
+  --text-secondary: #A1A1AA;
+  --text-muted:     #71717A;
+  --accent:         #8B5CF6;
+  --accent-soft:    rgba(139,92,246,0.14);
+  --accent-hover:   #7C3AED;
+  --toggle-off:     #3F3F46;
+  --success:        #4ADE80;
+  --warning:        #FBBF24;
+  --danger:         #F87171;
+  --shadow:         0 2px 16px rgba(0,0,0,0.5);
+  --shadow-card:    0 1px 6px rgba(0,0,0,0.35);
+}
+
+/* ══════════════════════════════════════════
+   BASE
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 380px; height: 575px;
+  overflow: hidden; background: transparent;
+  font-family: var(--font); -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ══════════════════════════════════════════
+   SHELL
+══════════════════════════════════════════ */
+#shell {
+  width: 100%; height: 100%;
+  background: var(--bg-main);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: background var(--tr);
+  position: relative;
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.header {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+.hd-left { display: flex; align-items: center; gap: 9px; }
+.app-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+.hd-right { display: flex; gap: 5px; align-items: center; -webkit-app-region: no-drag; }
+
+/* Lang */
+.lang-row {
+  display: flex; gap: 1px; padding: 2px;
+  background: var(--bg-hover); border: 1px solid var(--border); border-radius: 7px;
+}
+.lang-btn {
+  font: 600 10px/1 var(--font); color: var(--text-muted);
+  background: none; border: none; border-radius: 5px;
+  padding: 2px 7px; cursor: pointer; -webkit-app-region: no-drag;
+  transition: all var(--tr);
+}
+.lang-btn.active {
+  background: var(--bg-card); color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.lang-btn:hover:not(.active) { color: var(--text-secondary); }
+
+.icon-btn {
+  width: 26px; height: 26px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-secondary);
+  transition: all var(--tr); -webkit-app-region: no-drag;
+}
+.icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ══════════════════════════════════════════
+   CONTENT
+══════════════════════════════════════════ */
+.content {
+  flex: 1; overflow: hidden;       /* NO scrollbar */
+  padding: 10px 10px 6px;
+  display: flex; flex-direction: column; gap: 7px;
+  -webkit-app-region: no-drag;
+}
+
+/* ══════════════════════════════════════════
+   CARD
+══════════════════════════════════════════ */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--r-card); padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--tr), background var(--tr), box-shadow var(--tr);
+  animation: cardIn .18s ease both;
+}
+.card.active-card {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+}
+@keyframes cardIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; } }
+
+/* Feature header row */
+.feat-row { display: flex; align-items: center; justify-content: space-between; }
+.feat-left { display: flex; align-items: center; gap: 9px; }
+.feat-icon {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
+  background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.12);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  transition: background var(--tr);
+}
+.dark .feat-icon { border-color: rgba(139,92,246,0.2); }
+.active-card .feat-icon { background: var(--accent); border-color: transparent; }
+.feat-text h3 { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.feat-text p  { font-size: 10.5px; color: var(--text-secondary); margin-top: 1px; }
+
+/* Divider */
+.div { height: 1px; background: var(--border); margin: 0 -13px; }
+
+/* ══════════════════════════════════════════
+   TOGGLE
+══════════════════════════════════════════ */
+.tog { position: relative; width: 38px; height: 21px; cursor: pointer; -webkit-app-region: no-drag; flex-shrink: 0; }
+.tog input { display: none; }
+.tog-track {
+  position: absolute; inset: 0; border-radius: 11px;
+  background: var(--toggle-off); transition: background 200ms ease;
+}
+.tog input:checked ~ .tog-track { background: var(--accent); }
+.tog-thumb {
+  position: absolute; top: 2.5px; left: 2.5px; width: 16px; height: 16px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+  transition: transform 200ms cubic-bezier(.34,1.4,.64,1);
+}
+.tog input:checked ~ .tog-thumb { transform: translateX(17px); }
+
+/* ══════════════════════════════════════════
+   SETTINGS ROW
+══════════════════════════════════════════ */
+.row { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+.lbl { font-size: 11.5px; color: var(--text-secondary); flex-shrink: 0; font-weight: 450; }
+
+/* ══════════════════════════════════════════
+   SELECT
+══════════════════════════════════════════ */
+.cf-sel {
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text-primary);
+  font: 500 11.5px var(--font); padding: 4px 22px 4px 8px;
+  outline: none; cursor: pointer; -webkit-app-region: no-drag;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color var(--tr);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%236366F1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center;
+}
+.dark .cf-sel {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%238B5CF6'/%3E%3C/svg%3E");
+}
+.cf-sel:focus { border-color: var(--accent); }
+
+/* Number input */
+.cf-num {
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text-primary);
+  font: 500 11.5px var(--font); padding: 4px 6px;
+  width: 58px; text-align: right; outline: none;
+  -webkit-app-region: no-drag; transition: border-color var(--tr);
+}
+.cf-num:focus { border-color: var(--accent); }
+.num-wrap { display: flex; align-items: center; gap: 4px; }
+
+/* ══════════════════════════════════════════
+   ACTIVITY BUTTONS
+══════════════════════════════════════════ */
+.act-row { display: flex; gap: 4px; flex: 1; margin-left: 8px; }
+.act-btn {
+  flex: 1; background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text-secondary);
+  font: 600 10.5px var(--font); padding: 5px 2px;
+  cursor: pointer; text-align: center; -webkit-app-region: no-drag;
+  transition: all var(--tr);
+}
+.act-btn:hover:not(.active) { background: var(--bg-card); color: var(--text-primary); }
+.act-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+/* ══════════════════════════════════════════
+   CLICK COUNT
+══════════════════════════════════════════ */
+.count-wrap { display: flex; align-items: center; gap: 6px; }
+.count-num {
+  font: 600 13px var(--font); color: var(--accent);
+  min-width: 28px; text-align: right;
+}
+.btn-reset {
+  background: none; border: none; padding: 1px 4px;
+  color: var(--text-muted); font-size: 14px;
+  cursor: pointer; -webkit-app-region: no-drag;
+  transition: color var(--tr); line-height: 1;
+}
+.btn-reset:hover { color: var(--accent); }
+
+/* Position row flash when required */
+@keyframes flashRequired {
+  0%   { background: transparent; }
+  25%  { background: rgba(239,68,68,.12); border-radius: 6px; }
+  75%  { background: rgba(239,68,68,.12); border-radius: 6px; }
+  100% { background: transparent; }
+}
+.flash-required { animation: flashRequired 0.7s ease both; }
+
+/* ══════════════════════════════════════════
+   BEHAVIOR STATE BADGE
+══════════════════════════════════════════ */
+.state-badge {
+  font: 600 11px var(--font);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 3px 10px;
+  opacity: 0.85;
+  transition: all var(--tr);
+}
+.pro-badge {
+  font-size: 7.5px; font-weight: 700;
+  background: linear-gradient(135deg,#FF8A00,#FF5E3A); color: #fff;
+  padding: 1px 3px; border-radius: 3px; vertical-align: middle; margin-left: 2px;
+}
+
+/* ══════════════════════════════════════════
+   STATUS CHIP
+══════════════════════════════════════════ */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.2px;
+  padding: 2px 8px; border-radius: 20px;
+}
+.chip.on  { background: rgba(34,197,94,.10); color: var(--success); }
+.chip.off { background: var(--bg-hover); color: var(--text-muted); }
+.dark .chip.on { background: rgba(74,222,128,.12); }
+.chip-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.chip.on .chip-dot { box-shadow: 0 0 5px currentColor; }
+
+/* ══════════════════════════════════════════
+   POSITION CAPTURE
+══════════════════════════════════════════ */
+.pos-wrap { display: flex; align-items: center; gap: 5px; }
+.pos-disp {
+  width: 90px; flex-shrink: 0;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 4px 8px;
+  font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+  transition: border-color var(--tr), color var(--tr);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pos-disp.set { color: var(--text-primary); border-color: var(--accent); }
+
+/* ══════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════ */
+.btn-p {
+  background: var(--accent); border: none; border-radius: var(--r-btn);
+  color: #fff; font: 600 11.5px var(--font); padding: 5px 12px;
+  cursor: pointer; -webkit-app-region: no-drag;
+  transition: background var(--tr), transform var(--tr); white-space: nowrap;
+}
+.btn-p:hover { background: var(--accent-hover); }
+.btn-p:active { transform: scale(.97); }
+.btn-d {
+  background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2);
+  border-radius: var(--r-btn); color: var(--danger);
+  font: 500 11.5px var(--font); padding: 5px 12px;
+  cursor: pointer; -webkit-app-region: no-drag;
+  transition: background var(--tr); white-space: nowrap;
+}
+.btn-d:hover { background: rgba(239,68,68,.14); }
+
+/* ══════════════════════════════════════════
+   ACCESSIBILITY
+══════════════════════════════════════════ */
+.acc-wrap { display: flex; align-items: center; gap: 5px; }
+.acc-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-muted); flex-shrink: 0; transition: all .3s ease;
+}
+.acc-dot.ok   { background: var(--success); box-shadow: 0 0 5px var(--success); }
+.acc-dot.warn { background: var(--warning); box-shadow: 0 0 5px var(--warning); }
+.acc-txt { font-size: 11px; color: var(--text-secondary); }
+
+
+/* Grant accessibility button */
+.btn-grant {
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.3);
+  border-radius: var(--r-sm); color: var(--warning);
+  font: 600 10px var(--font); padding: 3px 8px;
+  cursor: pointer; -webkit-app-region: no-drag; transition: all var(--tr);
+}
+.btn-grant:hover { background: rgba(245,158,11,.15); }
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+.foot-inline {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 4px 14px 2px;
+  -webkit-app-region: no-drag;
+}
+.ver { font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: .2px; }
+.foot-help-btn {
+  background: none; border: none; padding: 0;
+  color: var(--accent); font: 400 10.5px var(--font);
+  cursor: pointer; -webkit-app-region: no-drag;
+  text-decoration: underline; text-underline-offset: 2px;
+  transition: opacity var(--tr);
+}
+.foot-help-btn:hover { opacity: 0.6; }
+.shell-btns {
+  flex-shrink: 0;
+  display: flex; gap: 7px; justify-content: center;
+  padding: 0 14px 10px;
+  -webkit-app-region: no-drag;
+}
+.foot-btn {
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text-secondary);
+  font: 500 11px var(--font); padding: 4px 16px;
+  cursor: pointer; -webkit-app-region: no-drag; transition: all var(--tr);
+}
+.foot-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+.foot-btn.quit { border-color: rgba(239,68,68,.5); color: var(--danger); background: rgba(239,68,68,.04); }
+.foot-btn.quit:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* ══════════════════════════════════════════
+   HELP PANEL (slide-up overlay)
+══════════════════════════════════════════ */
+.help-overlay {
+  display: none; position: absolute; inset: 0;
+  background: rgba(0,0,0,.32); border-radius: var(--r-card);
+  z-index: 50; align-items: flex-end;
+}
+.help-overlay.open { display: flex; }
+.help-panel {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  padding: 14px 16px 18px; width: 100%;
+  box-shadow: 0 -6px 24px rgba(0,0,0,.14);
+}
+.help-panel h4 {
+  font-size: 12px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center;
+}
+.help-close {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 14px; cursor: pointer; -webkit-app-region: no-drag;
+  line-height: 1; padding: 0;
+}
+.help-close:hover { color: var(--text-primary); }
+.help-row { font-size: 10.5px; color: var(--text-secondary); line-height: 1.6; }
+.help-row + .help-row { margin-top: 5px; }
+.help-row strong { color: var(--text-primary); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="hd-left">
+      <span class="app-name">CursorFlow</span>
+    </div>
+    <div class="hd-right">
+      <div class="lang-row">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn"        data-lang="zh">中</button>
+        <button class="lang-btn"        data-lang="ja">日</button>
+      </div>
+      <button class="icon-btn" id="themeBtn">🌙</button>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="content">
+
+    <!-- ① Mouse Movement -->
+    <div class="card" id="movCard">
+      <div class="feat-row">
+        <div class="feat-left">
+          <div class="feat-icon">🖱</div>
+          <div class="feat-text">
+            <h3 id="movTitle">Mouse Movement</h3>
+            <p  id="movDesc">Keeps cursor active to prevent idle</p>
+          </div>
+        </div>
+        <label class="tog">
+          <input type="checkbox" id="movTog"/>
+          <div class="tog-track"></div><div class="tog-thumb"></div>
+        </label>
+      </div>
+
+      <div class="div"></div>
+
+      <!-- Behavior state (auto-detected, read-only) -->
+      <div class="row">
+        <span class="lbl" id="iBehavior">Behavior</span>
+        <div class="state-badge" id="stateBadge">Idle</div>
+      </div>
+
+      <!-- Start after idle -->
+      <div class="row">
+        <span class="lbl" id="iStart">Start after idle</span>
+        <div class="num-wrap">
+          <input class="cf-num" type="number" id="startAfter" min="0" max="60" value="10"/>
+          <span class="lbl" id="iSecA">sec</span>
+        </div>
+      </div>
+
+      <!-- Activity level -->
+      <div class="row">
+        <span class="lbl" id="iActivity">Activity</span>
+        <div class="act-row">
+          <button class="act-btn" data-ms="3000"  id="actHigh"><span id="aHigh">High</span></button>
+          <button class="act-btn active" data-ms="10000" id="actMed"><span id="aMed">Medium</span></button>
+          <button class="act-btn" data-ms="30000" id="actLow"><span id="aLow">Low</span></button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="row">
+        <span class="lbl" id="iMovSt">Status</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="chip off" id="movChip"><div class="chip-dot"></div><span id="movChipTxt">Inactive</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② Auto Click -->
+    <div class="card" id="clkCard">
+      <div class="feat-row">
+        <div class="feat-left">
+          <div class="feat-icon">👆</div>
+          <div class="feat-text">
+            <h3 id="clkTitle">Auto Click</h3>
+            <p  id="clkDesc">Clicks at a fixed position automatically</p>
+          </div>
+        </div>
+        <label class="tog">
+          <input type="checkbox" id="clkTog"/>
+          <div class="tog-track"></div><div class="tog-thumb"></div>
+        </label>
+      </div>
+
+      <div class="div"></div>
+
+      <!-- Button -->
+      <div class="row">
+        <span class="lbl" id="iBtn">Button</span>
+        <select class="cf-sel" id="clkBtn">
+          <option value="Left"  id="oLeft">Left</option>
+          <option value="Right" id="oRight">Right</option>
+        </select>
+      </div>
+
+      <!-- Interval -->
+      <div class="row">
+        <span class="lbl" id="iClkInterval">Interval</span>
+        <div class="num-wrap">
+          <input class="cf-num" type="number" id="clkInterval" min="1" max="3600000" step="1000" value="1000"/>
+          <span class="lbl" id="iClkSec">ms</span>
+        </div>
+      </div>
+
+      <!-- Position -->
+      <div class="row">
+        <span class="lbl" id="iPos">Position</span>
+        <div class="pos-wrap">
+          <div class="pos-disp" id="posDisp">Not set</div>
+          <button class="btn-p" id="setBtn">Set</button>
+          <button class="btn-d" id="clrBtn" style="display:none">Clear</button>
+        </div>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="row">
+        <span class="lbl" id="iAcc">Accessibility</span>
+        <div class="acc-wrap">
+          <div class="acc-dot" id="accDot"></div>
+          <span class="acc-txt" id="accTxt">Checking…</span>
+          <button class="btn-grant" id="accGrantBtn" style="display:none">Grant</button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="row">
+        <span class="lbl" id="iClkSt">Status</span>
+        <div class="chip off" id="clkChip"><div class="chip-dot"></div><span id="clkChipTxt">Inactive</span></div>
+      </div>
+
+      <!-- Click count -->
+      <div class="row" id="clkCountRow" style="display:none">
+        <span class="lbl" id="iClkCount">Clicks</span>
+        <div class="count-wrap">
+          <span class="count-num" id="clkCountNum">0</span>
+          <button class="btn-reset" id="clkResetBtn" title="Reset">↺</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Version + Help -->
+    <div class="foot-inline">
+      <span class="ver">v1.0.0</span>
+      <button class="foot-help-btn" id="helpBtn" data-i18n="helpBtn">Help</button>
+    </div>
+
+  </div><!-- .content -->
+
+  <!-- Hide / Quit — pinned to bottom of shell -->
+  <div class="shell-btns">
+    <button class="foot-btn"      id="hideBtn">Hide</button>
+    <button class="foot-btn quit" id="quitBtn">Quit</button>
+  </div>
+
+  <!-- Help overlay -->
+  <div class="help-overlay" id="helpOverlay">
+    <div class="help-panel">
+      <h4>CursorFlow <button class="help-close" id="helpClose">✕</button></h4>
+      <div class="help-row" id="helpR1"></div>
+      <div class="help-row" id="helpR2"></div>
+      <div class="help-row" id="helpR3"></div>
+      <div class="help-row" id="helpR4"></div>
+      <div class="help-row" id="helpR5"></div>
+    </div>
+  </div>
+
+</div><!-- #shell -->
+
+<script>
+// ══════════════════════════════════════════
+//  i18n
+// ══════════════════════════════════════════
+const LANGS = {
+  en: {
+    movTitle:'Mouse Movement', movDesc:'Keeps cursor active to prevent idle',
+    clkTitle:'Auto Click',     clkDesc:'Clicks at a fixed position automatically',
+    iStart:'Start after idle', iActivity:'Activity',
+    aHigh:'High', aMed:'Medium', aLow:'Low',
+    iSec:'sec', iStatus:'Status',
+    iBtn:'Button', iPos:'Position', iAcc:'Accessibility',
+    iClkInterval:'Interval', iClkSec:'ms', iClkCount:'Clicks',
+    oLeft:'Left', oRight:'Right',
+    stOn:'Active', stOff:'Inactive',
+    accOk:'Granted', accWarn:'Required for clicking',
+    posEmpty:'Not set',
+    setBtn:'Set', clrBtn:'Clear',
+    hide:'Hide', quit:'Quit',
+    helpBtn:'Help',
+    helpR1:'<strong>Mouse Movement</strong> — Moves the cursor with human-like curves and velocity to prevent system idle, screensavers, or session timeouts. Behavior automatically adapts based on how long you\'ve been inactive.',
+    helpR2:'<strong>Behavior states</strong> — Micro · Navigating · Reading · Thinking · Idle. The engine transitions between these automatically; no manual configuration needed.',
+    helpR3:'<strong>Activity</strong> — Controls overall movement frequency. High = frequent small moves; Low = rare larger moves.',
+    helpR4:'<strong>Auto Click</strong> — Clicks a fixed screen position on the set interval. Set the position by clicking "Set", then clicking anywhere on screen. Requires Accessibility permission.',
+    helpR5:'<strong>Start after idle</strong> — The engine only activates after this many milliseconds of cursor inactivity.',
+  },
+  zh: {
+    movTitle:'鼠标移动', movDesc:'保持鼠标活动，防止系统休眠',
+    clkTitle:'自动点击', clkDesc:'在固定位置自动点击',
+    iStart:'闲置后开始', iActivity:'活跃度',
+    aHigh:'高', aMed:'中', aLow:'低',
+    iSec:'秒', iStatus:'状态',
+    iBtn:'按键', iPos:'位置', iAcc:'辅助功能',
+    iClkInterval:'间隔', iClkSec:'ms', iClkCount:'点击次数',
+    oLeft:'左键', oRight:'右键',
+    stOn:'激活中', stOff:'未激活',
+    accOk:'已授权', accWarn:'点击需要此权限',
+    posEmpty:'未设置',
+    setBtn:'设置', clrBtn:'清除',
+    hide:'隐藏', quit:'退出',
+    helpBtn:'帮助',
+    helpR1:'<strong>鼠标移动</strong> — 以仿人类的曲线和速度移动光标，防止系统进入休眠、屏保或会话超时。行为会根据你的闲置时长自动调整。',
+    helpR2:'<strong>行为状态</strong> — 微操作 · 界面导航 · 阅读 · 思考 · 空闲。引擎自动在各状态间切换，无需手动配置。',
+    helpR3:'<strong>活跃度</strong> — 控制整体移动频率。高 = 频繁小幅移动；低 = 偶尔大幅移动。',
+    helpR4:'<strong>自动点击</strong> — 按设定间隔在固定坐标点击。点击"设置"后在屏幕任意位置单击即可捕获坐标。需要辅助功能权限。',
+    helpR5:'<strong>闲置后开始</strong> — 光标静止超过设定毫秒数后，引擎才会开始工作。',
+  },
+  ja: {
+    movTitle:'マウス移動', movDesc:'カーソルをアクティブに保ちスリープを防止',
+    clkTitle:'自動クリック', clkDesc:'固定位置で自動的にクリック',
+    iStart:'アイドル後に開始', iActivity:'アクティビティ',
+    aHigh:'高', aMed:'中', aLow:'低',
+    iSec:'秒', iStatus:'ステータス',
+    iBtn:'ボタン', iPos:'位置', iAcc:'アクセシビリティ',
+    iClkInterval:'間隔', iClkSec:'ms', iClkCount:'クリック数',
+    oLeft:'左クリック', oRight:'右クリック',
+    stOn:'アクティブ', stOff:'非アクティブ',
+    accOk:'許可済み', accWarn:'クリックに必要',
+    posEmpty:'未設定',
+    setBtn:'設定', clrBtn:'クリア',
+    hide:'非表示', quit:'終了',
+    helpBtn:'ヘルプ',
+    helpR1:'<strong>マウス移動</strong> — 人間らしい曲線と速度でカーソルを動かし、スリープ・スクリーンセーバー・セッションタイムアウトを防止します。非アクティブ時間に応じて動作が自動調整されます。',
+    helpR2:'<strong>行動状態</strong> — マイクロ操作 · UI ナビ · 閲覧 · 思考 · アイドル。エンジンが自動で状態を切り替えます。手動設定は不要です。',
+    helpR3:'<strong>アクティビティ</strong> — 移動頻度を制御します。高 = 頻繁な小移動、低 = まれな大移動。',
+    helpR4:'<strong>自動クリック</strong> — 設定間隔で固定座標をクリックします。「設定」ボタンを押してから画面上の任意の場所をクリックして座標を取得します。アクセシビリティ権限が必要です。',
+    helpR5:'<strong>アイドル後に開始</strong> — カーソルが設定したミリ秒間静止した後にエンジンが起動します。',
+  },
+};
+
+let lang = 'en';
+function T(k) { return (LANGS[lang]||{})[k] || LANGS.en[k] || k; }
+function $(id)  { return document.getElementById(id); }
+
+// ══════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════
+let cfg = {}, movOn = false, clkOn = false, accOk = false, isDark = false;
+
+// ══════════════════════════════════════════
+//  Render helpers
+// ══════════════════════════════════════════
+function setText(id, v) { const e = $(id); if(e) e.textContent = v; }
+function setPlaceholder(id, v) { const e = $(id); if(e) e.placeholder = v; }
+
+function renderAll() {
+  setText('movTitle', T('movTitle')); setText('movDesc', T('movDesc'));
+  setText('clkTitle', T('clkTitle')); setText('clkDesc', T('clkDesc'));
+  setText('iStart',    T('iStart'));    setText('iActivity', T('iActivity'));
+  setText('aHigh',     T('aHigh'));     setText('aMed',      T('aMed'));     setText('aLow', T('aLow'));
+  setText('iSecA',     T('iSec'));
+  setText('iMovSt', T('iStatus'));setText('iClkSt', T('iStatus'));
+  setText('iBtn',   T('iBtn'));   setText('iPos',   T('iPos'));
+  setText('iAcc',   T('iAcc'));
+  setText('iClkInterval', T('iClkInterval'));
+  setText('iClkSec',      T('iClkSec'));
+  setText('iClkCount',    T('iClkCount'));
+  setText('oLeft',  T('oLeft'));  setText('oRight', T('oRight'));
+  setText('setBtn', T('setBtn')); setText('clrBtn', T('clrBtn'));
+  setText('hideBtn', T('hide'));  setText('quitBtn', T('quit'));
+  setText('helpBtn', T('helpBtn'));
+  ['helpR1','helpR2','helpR3','helpR4','helpR5'].forEach(id => {
+    const el = $(id); if (el) el.innerHTML = T(id);
+  });
+  renderMovStatus(); renderClkStatus(); renderAcc(); renderPos();
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang));
+}
+
+function renderMovStatus() {
+  const c = $('movChip');
+  c.className = 'chip ' + (movOn ? 'on' : 'off');
+  setText('movChipTxt', movOn ? T('stOn') : T('stOff'));
+  $('movCard').classList.toggle('active-card', movOn);
+}
+function renderClkStatus() {
+  const c = $('clkChip');
+  c.className = 'chip ' + (clkOn ? 'on' : 'off');
+  setText('clkChipTxt', clkOn ? T('stOn') : T('stOff'));
+  $('clkCard').classList.toggle('active-card', clkOn);
+}
+function renderAcc() {
+  $('accDot').className = 'acc-dot ' + (accOk ? 'ok' : 'warn');
+  setText('accTxt', accOk ? T('accOk') : T('accWarn'));
+}
+function renderPos() {
+  const el = $('posDisp'); const has = cfg.clickPosition?.x != null;
+  el.textContent = has
+    ? `${Math.round(cfg.clickPosition.x)}, ${Math.round(cfg.clickPosition.y)}`
+    : T('posEmpty');
+  el.classList.toggle('set', has);
+  $('clrBtn').style.display = has ? '' : 'none';
+}
+function applyTheme(dark) {
+  isDark = dark;
+  $('shell').classList.toggle('dark', dark);
+  $('themeBtn').textContent = dark ? '☀️' : '🌙';
+}
+
+function setActivity(ms) {
+  // Snap to nearest preset: High=3000, Medium=10000, Low=30000
+  const preset = ms <= 6000 ? 3000 : ms <= 18000 ? 10000 : 30000;
+  document.querySelectorAll('.act-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.ms) === preset));
+}
+
+function applyConfig(c) {
+  cfg = c;
+  $('startAfter').value  = Math.round((c.startAfter  != null ? c.startAfter  : 10000) / 1000);
+  $('clkInterval').value = c.clickInterval != null ? c.clickInterval : 1000;
+  $('clkBtn').value      = c.clickButton || 'Left';
+  setActivity(c.moveEvery || 10000);
+  applyTheme(c.theme !== 'light');
+  renderAll();
+}
+
+// ══════════════════════════════════════════
+//  Helper: safe Tauri invoke (no-op if IPC not ready)
+// ══════════════════════════════════════════
+function tauri(cmd, args) {
+  if (!window.__TAURI__) return Promise.resolve(null);
+  return window.__TAURI__.core.invoke(cmd, args || {}).catch(e => { console.error(cmd, e); return null; });
+}
+
+// ══════════════════════════════════════════
+//  ALL event bindings — immediate, no wait
+// ══════════════════════════════════════════
+
+// Language
+document.querySelectorAll('.lang-btn').forEach(btn =>
+  btn.addEventListener('click', () => { lang = btn.dataset.lang; renderAll(); }));
+
+// Theme
+$('themeBtn').addEventListener('click', () => {
+  applyTheme(!isDark);
+  tauri('set_config', { key:'theme', value: isDark ? 'dark' : 'light' });
+});
+
+// Movement toggle
+$('movTog').addEventListener('change', e => {
+  movOn = e.target.checked;
+  renderMovStatus();
+  tauri('toggle_movement', { active: movOn });
+});
+
+// Click toggle — requires position to be set before enabling
+$('clkTog').addEventListener('change', e => {
+  if (e.target.checked && !cfg.clickPosition) {
+    // Reject: revert toggle and flash the Position row
+    e.target.checked = false;
+    const posRow = $('posDisp').closest('.row');
+    posRow.classList.remove('flash-required');
+    void posRow.offsetWidth; // force reflow to restart animation
+    posRow.classList.add('flash-required');
+    posRow.addEventListener('animationend', () => posRow.classList.remove('flash-required'), { once: true });
+    return;
+  }
+  clkOn = e.target.checked;
+  renderClkStatus();
+  $('clkCountRow').style.display = clkOn ? '' : 'none';
+  tauri('toggle_click', { active: clkOn });
+});
+
+// Settings
+$('startAfter').addEventListener('change',   e => tauri('set_config', { key:'startAfter',    value:Math.max(0,+e.target.value||0)*1000 }));
+$('clkInterval').addEventListener('change',  e => tauri('set_config', { key:'clickInterval', value:Math.max(1,+e.target.value||1000) }));
+$('clkBtn').addEventListener('change',       e => tauri('set_config', { key:'clickButton',   value:e.target.value }));
+$('clkResetBtn').addEventListener('click',   () => { $('clkCountNum').textContent = '0'; tauri('reset_click_count'); });
+
+document.querySelectorAll('.act-btn').forEach(btn => btn.addEventListener('click', () => {
+  const ms = parseInt(btn.dataset.ms);
+  setActivity(ms);
+  tauri('set_config', { key:'moveEvery', value:ms });
+}));
+
+// Position capture + accessibility grant
+$('accGrantBtn').addEventListener('click', () => tauri('request_accessibility'));
+$('setBtn').addEventListener('click',      () => tauri('start_position_capture'));
+$('clrBtn').addEventListener('click',      () => { cfg.clickPosition=null; renderPos(); tauri('set_config',{key:'clickPosition',value:null}); });
+
+// Footer
+$('hideBtn').addEventListener('click', () => tauri('hide_window'));
+$('quitBtn').addEventListener('click', () => tauri('quit_app'));
+$('helpBtn').addEventListener('click',  () => $('helpOverlay').classList.add('open'));
+$('helpClose').addEventListener('click',() => $('helpOverlay').classList.remove('open'));
+$('helpOverlay').addEventListener('click', e => { if(e.target === $('helpOverlay')) $('helpOverlay').classList.remove('open'); });
+
+// Initial render (before Tauri loads)
+renderAll();
+
+// ══════════════════════════════════════════
+//  Tauri init — load config + start polling
+// ══════════════════════════════════════════
+function waitForTauri(cb) {
+  if (window.__TAURI__) { cb(); return; }
+  const t = setInterval(() => { if (window.__TAURI__) { clearInterval(t); cb(); } }, 100);
+}
+
+waitForTauri(async () => {
+  const { invoke } = window.__TAURI__.core;
+  const { listen }  = window.__TAURI__.event;
+
+  // Load saved config + engine state
+  try {
+    const [c, s] = await Promise.all([invoke('get_config'), invoke('engine_status')]);
+    applyConfig(c);
+    accOk = s.accessibilityGranted;
+    renderAcc();
+  } catch(e) { console.error('init', e); }
+
+  // Poll engine status every 3s — keeps UI in sync
+  setInterval(async () => {
+    try {
+      const s = await invoke('engine_status');
+      accOk = s.accessibilityGranted;
+      if (s.movementEnabled !== movOn) { movOn=s.movementEnabled; $('movTog').checked=movOn; renderMovStatus(); }
+      if (s.clickEnabled   !== clkOn) { clkOn=s.clickEnabled;    $('clkTog').checked=clkOn; renderClkStatus(); }
+      renderAcc();
+      // Update cognitive state badge (only when movement is active)
+      if (s.cognitiveState && movOn) {
+        $('stateBadge').textContent = s.cognitiveState;
+        $('stateBadge').style.opacity = '1';
+      } else {
+        $('stateBadge').textContent = '—';
+        $('stateBadge').style.opacity = '0.4';
+      }
+      // Update click count display
+      if (clkOn) {
+        $('clkCountRow').style.display = '';
+        $('clkCountNum').textContent = s.clickCount != null ? s.clickCount : '0';
+      } else {
+        $('clkCountRow').style.display = 'none';
+      }
+    } catch {}
+  }, 3000);
+
+  // Push events from Rust → JS
+  listen('movement-state-changed', ev => { movOn=ev.payload; $('movTog').checked=movOn; renderMovStatus(); });
+  listen('click-state-changed',    ev => { clkOn=ev.payload; $('clkTog').checked=clkOn; renderClkStatus(); });
+  listen('capture-done',           ev => { cfg.clickPosition=ev.payload; renderPos(); });
+  listen('config-changed', ev => {
+    if (ev.payload.key==='theme') { applyTheme(ev.payload.value!=='light'); }
+  });
+});
+</script>
+</body>
+</html>
