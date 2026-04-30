@@ -6,7 +6,7 @@ struct ContentView: View {
     @State private var showingHelp = false
     @State private var themeFadeOverlay: AppTheme?
     @State private var themeFadeOpacity = 0.0
-    private let accent = Color(red: 0.39, green: 0.34, blue: 0.88)
+    private let accent = Color(red: 0.098, green: 0.565, blue: 0.929)
 
     var body: some View {
         ZStack {
@@ -442,7 +442,7 @@ struct ContentView: View {
     private func themeTintColor(_ theme: AppTheme) -> Color {
         switch resolvedTheme(theme) {
         case .dark:
-            return Color(red: 0.36, green: 0.34, blue: 0.55)
+            return Color(red: 0.098, green: 0.565, blue: 0.929)
         default:
             return Color.white
         }
@@ -733,7 +733,7 @@ private struct GlassBackgroundModifier: ViewModifier {
 
     private var highlightColor: Color {
         colorScheme == .dark
-            ? Color(red: 0.45, green: 0.43, blue: 0.62)
+            ? Color(red: 0.098, green: 0.565, blue: 0.929)
             : Color.white
     }
 }
@@ -760,7 +760,7 @@ private struct GlassControlModifier: ViewModifier {
                     .stroke(strokeColor, lineWidth: 1)
                     .animation(.easeInOut(duration: 0.34), value: colorScheme)
             )
-            .foregroundStyle(Color(red: 0.39, green: 0.34, blue: 0.88))
+            .foregroundStyle(Color(red: 0.098, green: 0.565, blue: 0.929))
     }
 
     private var baseColor: Color {
