@@ -65,6 +65,10 @@ swift build
 
 [WooZH](https://github.com/WooZH)
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 ## 中文说明
@@ -133,3 +137,7 @@ swift build
 ## 作者
 
 [WooZH](https://github.com/WooZH)
+
+## 协议
+
+[MIT](LICENSE)
