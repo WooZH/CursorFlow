@@ -26,6 +26,7 @@ enum MouseController {
             return
         }
         event.post(tap: .cghidEventTap)
+        CGWarpMouseCursorPosition(point)
     }
 
     static func click(at point: CGPoint, button: MouseButton) {

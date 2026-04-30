@@ -54,6 +54,7 @@ final class AppModel: ObservableObject {
     private var movementQueue: [(point: CGPoint, delay: TimeInterval)] = []
     private var lastUserMove = Date.distantPast
     private var enginePosition = MouseController.currentPosition()
+    private var lastEngineMove = Date.distantPast
     private var lastEngineClick = Date.distantPast
     private var previousButtons = 0
     private var movementHistory = MovementHistory()
@@ -188,7 +189,7 @@ final class AppModel: ObservableObject {
     private func observeUserActivity() {
         let current = MouseController.currentPosition()
         let distance = hypot(current.x - enginePosition.x, current.y - enginePosition.y)
-        if distance > 12 {
+        if distance > 12, Date().timeIntervalSince(lastEngineMove) > 0.25 {
             lastUserMove = Date()
             enginePosition = current
         }
@@ -218,6 +219,7 @@ final class AppModel: ObservableObject {
         guard Date() >= nextMovementAt, !movementQueue.isEmpty else { return }
         let next = movementQueue.removeFirst()
         MouseController.move(to: next.point)
+        lastEngineMove = Date()
         enginePosition = next.point
         nextMovementAt = Date().addingTimeInterval(next.delay)
     }
