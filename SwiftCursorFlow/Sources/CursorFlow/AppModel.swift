@@ -65,9 +65,10 @@ final class AppModel: ObservableObject {
 
     init() {
         config = AppConfig.load()
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        tickTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
+        RunLoop.main.add(tickTimer!, forMode: .common)
     }
 
     deinit {
@@ -266,10 +267,10 @@ final class AppModel: ObservableObject {
     }
 
     private func generatePath(from start: CGPoint, to end: CGPoint, state: CognitiveState) -> [(point: CGPoint, delay: TimeInterval)] {
-        let steps = state.waypoints
         let dx = end.x - start.x
         let dy = end.y - start.y
         let length = max(1, hypot(dx, dy))
+        let steps = state.waypoints(for: length)
         let nx = -dy / length
         let ny = dx / length
         let sign = Bool.random() ? 1.0 : -1.0
@@ -303,8 +304,9 @@ final class AppModel: ObservableObject {
                 y: basePoint.y + ny * noiseY
             )
 
-            let speed = 0.32 + 0.68 * envelope
-            let baseDelay = min(max((0.058 / speed), 0.018), 0.095)
+            let speed = 0.38 + 0.62 * envelope
+            let distanceDelay = min(max(length / Double(steps) / 950.0, 0.006), 0.018)
+            let baseDelay = min(max((distanceDelay / speed), 0.006), 0.036)
             let delay: TimeInterval
             if step > 1, step < steps, Double.random(in: 0...1) < state.hesitationProbability {
                 delay = Double.random(in: state.hesitationRange)
@@ -486,14 +488,16 @@ private enum CognitiveState {
         }
     }
 
-    var waypoints: Int {
-        switch self {
+    func waypoints(for distance: Double) -> Int {
+        let base: Int = switch self {
         case .microInteraction: 8
         case .navigatingUI: 26
         case .reading: 18
         case .thinking: 14
         case .idle: 8
         }
+        let distanceBoost = Int(distance / 9.0)
+        return min(max(base, distanceBoost), 72)
     }
 
     var curveFactor: Double {
