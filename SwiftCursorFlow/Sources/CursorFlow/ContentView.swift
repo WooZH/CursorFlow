@@ -382,6 +382,19 @@ struct ContentView: View {
                     Text(batteryText)
                         .foregroundStyle(.secondary)
                 }
+
+                HStack {
+                    Label(t("updates"), systemImage: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(Color.primary.opacity(0.90))
+                    Spacer()
+                    Button(model.isCheckingForUpdates ? t("checkingUpdates") : t("checkUpdates")) {
+                        Task { await model.checkForUpdates() }
+                    }
+                    .disabled(model.isCheckingForUpdates)
+                    .buttonStyle(.plain)
+                    .glassControl(cornerRadius: 8)
+                    .focusable(false)
+                }
             }
 
         }
@@ -396,7 +409,7 @@ struct ContentView: View {
                 .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .center)
             HStack(spacing: 4) {
-                Text("v1.1.1 ·")
+                Text("v\(AppInfo.version) ·")
                 Button("WooZH") {
                     NSWorkspace.shared.open(URL(string: "https://github.com/WooZH")!)
                 }
@@ -899,6 +912,7 @@ private enum L {
             "left": "Left", "right": "Right", "natural": "Natural", "smart": "Smart", "subtle": "Subtle",
             "timer": "Stop after", "keepAwake": "Keep awake", "batteryProtection": "Pause on low battery",
             "schedule": "Schedule", "from": "From", "to": "To", "off": "Off",
+            "updates": "Updates", "checkUpdates": "Check", "checkingUpdates": "Checking...",
             "batteryThreshold": "Threshold", "battery": "Battery", "charging": "charging", "unknown": "Unknown",
             "stateIdle": "Idle", "stateUserActive": "User active", "stateMicro": "Micro", "stateNavigating": "Navigating", "stateReading": "Reading", "stateThinking": "Thinking",
             "footer": "Manual movement pauses automation. Manual clicking cancels auto click.",
@@ -923,6 +937,7 @@ private enum L {
             "left": "左键", "right": "右键", "natural": "自然", "smart": "智能", "subtle": "轻微",
             "timer": "定时停止", "keepAwake": "保持清醒", "batteryProtection": "低电量暂停",
             "schedule": "定时保持", "from": "开始", "to": "结束", "off": "关闭",
+            "updates": "更新", "checkUpdates": "检查", "checkingUpdates": "检查中...",
             "batteryThreshold": "阈值", "battery": "电量", "charging": "充电中", "unknown": "未知",
             "stateIdle": "空闲", "stateUserActive": "用户活跃", "stateMicro": "微操作", "stateNavigating": "导航", "stateReading": "阅读", "stateThinking": "思考",
             "footer": "手动移动会暂停自动化；手动点击会取消自动点击。",
@@ -947,6 +962,7 @@ private enum L {
             "left": "左", "right": "右", "natural": "自然", "smart": "スマート", "subtle": "控えめ",
             "timer": "停止タイマー", "keepAwake": "スリープ防止", "batteryProtection": "低電力で一時停止",
             "schedule": "スケジュール", "from": "開始", "to": "終了", "off": "オフ",
+            "updates": "更新", "checkUpdates": "確認", "checkingUpdates": "確認中...",
             "batteryThreshold": "しきい値", "battery": "バッテリー", "charging": "充電中", "unknown": "不明",
             "stateIdle": "アイドル", "stateUserActive": "ユーザー操作中", "stateMicro": "マイクロ", "stateNavigating": "ナビゲート", "stateReading": "閲覧", "stateThinking": "思考",
             "footer": "手動移動で自動化を一時停止します。手動クリックで自動クリックを解除します。",

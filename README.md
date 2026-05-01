@@ -16,6 +16,7 @@ CursorFlow is built with SwiftUI + AppKit. It runs from the menu bar, uses a nat
 - Keep-awake mode to prevent idle sleep while automation is active
 - Scheduled keep-awake window with overnight schedule support
 - Menu bar tooltip summary and right-click quick actions
+- Manual update checks through GitHub Releases
 - Menu bar visual status indicators for movement, click, and keep-awake
 - Low battery protection
 - English, Chinese, and Japanese UI
@@ -28,7 +29,7 @@ CursorFlow is built with SwiftUI + AppKit. It runs from the menu bar, uses a nat
 
 ## Download & Install
 
-1. Download the latest `CursorFlow-v1.1.1-macOS.zip` from the [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) page.
+1. Download the latest `CursorFlow-v1.2.0-macOS.zip` from the [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) page.
 2. Unzip the file and move `CursorFlow.app` to your `Applications` folder.
 3. Open `CursorFlow.app`. The app runs from the macOS menu bar.
 4. Grant Accessibility permission when prompted, or enable it manually in `System Settings > Privacy & Security > Accessibility`.

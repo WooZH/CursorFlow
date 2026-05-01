@@ -12,6 +12,16 @@ struct AutomationStatus: Equatable {
     }
 }
 
+private struct GitHubRelease: Decodable {
+    let tagName: String
+    let htmlURL: URL
+
+    enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+        case htmlURL = "html_url"
+    }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var config: AppConfig {
@@ -39,6 +49,7 @@ final class AppModel: ObservableObject {
     @Published var cognitiveState = "Idle"
     @Published var batteryStatus = BatteryStatus(percentage: nil, isCharging: true)
     @Published var timerRemaining: TimeInterval?
+    @Published var isCheckingForUpdates = false
     @Published var scheduleKeepAwakeActive = false {
         didSet {
             updatePowerAssertion()
@@ -176,6 +187,41 @@ final class AppModel: ObservableObject {
         let appearance = appearanceForCurrentTheme()
         NSApp.appearance = appearance
         onThemeChanged?(appearance)
+    }
+
+    func checkForUpdates() async {
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        defer { isCheckingForUpdates = false }
+
+        do {
+            var request = URLRequest(url: AppInfo.latestReleaseAPIURL)
+            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            request.setValue("CursorFlow/\(AppInfo.version)", forHTTPHeaderField: "User-Agent")
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
+                showUpdateAlert(title: updateText("updateFailedTitle"), message: updateText("updateFailedMessage"), releaseURL: nil)
+                return
+            }
+
+            let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+            if isVersion(release.tagName, newerThan: AppInfo.version) {
+                showUpdateAlert(
+                    title: updateText("updateAvailableTitle"),
+                    message: String(format: updateText("updateAvailableMessage"), release.tagName, AppInfo.version),
+                    releaseURL: release.htmlURL
+                )
+            } else {
+                showUpdateAlert(
+                    title: updateText("latestTitle"),
+                    message: String(format: updateText("latestMessage"), AppInfo.version),
+                    releaseURL: nil
+                )
+            }
+        } catch {
+            showUpdateAlert(title: updateText("updateFailedTitle"), message: updateText("updateFailedMessage"), releaseURL: nil)
+        }
     }
 
     func appearanceForCurrentTheme() -> NSAppearance? {
@@ -449,6 +495,82 @@ final class AppModel: ObservableObject {
         if scheduleKeepAwakeActive != active {
             scheduleKeepAwakeActive = active
         }
+    }
+
+    private func isVersion(_ candidate: String, newerThan current: String) -> Bool {
+        let candidateParts = versionParts(candidate)
+        let currentParts = versionParts(current)
+        for index in 0..<max(candidateParts.count, currentParts.count) {
+            let left = index < candidateParts.count ? candidateParts[index] : 0
+            let right = index < currentParts.count ? currentParts[index] : 0
+            if left != right {
+                return left > right
+            }
+        }
+        return false
+    }
+
+    private func versionParts(_ version: String) -> [Int] {
+        version
+            .trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+            .split(separator: ".")
+            .map { Int($0.prefix { $0.isNumber }) ?? 0 }
+    }
+
+    private func showUpdateAlert(title: String, message: String, releaseURL: URL?) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        if releaseURL != nil {
+            alert.addButton(withTitle: updateText("openRelease"))
+            alert.addButton(withTitle: updateText("later"))
+        } else {
+            alert.addButton(withTitle: updateText("ok"))
+        }
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn, let releaseURL {
+            NSWorkspace.shared.open(releaseURL)
+        }
+    }
+
+    private func updateText(_ key: String) -> String {
+        let table: [AppLanguage: [String: String]] = [
+            .english: [
+                "updateAvailableTitle": "Update Available",
+                "updateAvailableMessage": "%@ is available. You are using %@.",
+                "latestTitle": "CursorFlow Is Up to Date",
+                "latestMessage": "You are using the latest version, %@.",
+                "updateFailedTitle": "Unable to Check for Updates",
+                "updateFailedMessage": "Please try again later or visit the GitHub Releases page.",
+                "openRelease": "Open Release",
+                "later": "Later",
+                "ok": "OK"
+            ],
+            .chinese: [
+                "updateAvailableTitle": "发现新版本",
+                "updateAvailableMessage": "已有 %@ 可用，当前版本为 %@。",
+                "latestTitle": "CursorFlow 已是最新",
+                "latestMessage": "你正在使用最新版本 %@。",
+                "updateFailedTitle": "无法检查更新",
+                "updateFailedMessage": "请稍后重试，或前往 GitHub Releases 页面查看。",
+                "openRelease": "打开 Release",
+                "later": "稍后",
+                "ok": "好"
+            ],
+            .japanese: [
+                "updateAvailableTitle": "アップデートがあります",
+                "updateAvailableMessage": "%@ が利用できます。現在のバージョンは %@ です。",
+                "latestTitle": "CursorFlow は最新です",
+                "latestMessage": "最新バージョン %@ を使用しています。",
+                "updateFailedTitle": "アップデートを確認できません",
+                "updateFailedMessage": "後でもう一度試すか、GitHub Releases を確認してください。",
+                "openRelease": "Release を開く",
+                "later": "後で",
+                "ok": "OK"
+            ]
+        ]
+        return table[config.language]?[key] ?? table[.english]?[key] ?? key
     }
 
     private func createPowerAssertionIfNeeded(type: CFString, id: inout IOPMAssertionID) {

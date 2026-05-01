@@ -92,6 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             checked: model.config.keepAwakeEnabled
         ))
         menu.addItem(.separator())
+        menu.addItem(withTitle: "Check for Updates...", action: #selector(checkForUpdatesFromMenu), keyEquivalent: "")
         menu.addItem(withTitle: "Open CursorFlow", action: #selector(openFromMenu), keyEquivalent: "")
         menu.addItem(withTitle: "Quit", action: #selector(quitFromMenu), keyEquivalent: "")
 
@@ -121,6 +122,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openFromMenu() {
         showPopover()
+    }
+
+    @objc private func checkForUpdatesFromMenu() {
+        Task { await model.checkForUpdates() }
     }
 
     @objc private func quitFromMenu() {

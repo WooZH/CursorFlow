@@ -1,5 +1,11 @@
 import Foundation
 
+enum AppInfo {
+    static let version = "1.2.0"
+    static let releasesURL = URL(string: "https://github.com/WooZH/CursorFlow/releases")!
+    static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/WooZH/CursorFlow/releases/latest")!
+}
+
 struct ClickPosition: Codable, Equatable {
     var x: Double
     var y: Double
