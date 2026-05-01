@@ -28,7 +28,7 @@ CursorFlow 使用 SwiftUI + AppKit 构建。它运行在菜单栏中，提供 ma
 
 ## 下载与安装
 
-1. 前往 [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) 下载最新的 `CursorFlow-v1.1.0-macOS.zip`。
+1. 前往 [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) 下载最新的 `CursorFlow-v1.1.1-macOS.zip`。
 2. 解压后，将 `CursorFlow.app` 移动到 `Applications` 文件夹。
 3. 打开 `CursorFlow.app`，应用会运行在 macOS 菜单栏中。
 4. 根据提示授予辅助功能权限，或手动前往 `系统设置 > 隐私与安全性 > 辅助功能` 开启。

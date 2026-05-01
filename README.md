@@ -28,7 +28,7 @@ CursorFlow is built with SwiftUI + AppKit. It runs from the menu bar, uses a nat
 
 ## Download & Install
 
-1. Download the latest `CursorFlow-v1.1.0-macOS.zip` from the [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) page.
+1. Download the latest `CursorFlow-v1.1.1-macOS.zip` from the [GitHub Releases](https://github.com/WooZH/CursorFlow/releases) page.
 2. Unzip the file and move `CursorFlow.app` to your `Applications` folder.
 3. Open `CursorFlow.app`. The app runs from the macOS menu bar.
 4. Grant Accessibility permission when prompted, or enable it manually in `System Settings > Privacy & Security > Accessibility`.
