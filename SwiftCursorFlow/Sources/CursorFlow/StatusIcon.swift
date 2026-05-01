@@ -61,12 +61,12 @@ enum StatusIcon {
 
     private static func drawMovementMarker() {
         let path = NSBezierPath()
-        path.move(to: NSPoint(x: 14.6, y: 13.4))
-        path.line(to: NSPoint(x: 18.2, y: 9.7))
-        path.line(to: NSPoint(x: 14.6, y: 6.0))
-        path.line(to: NSPoint(x: 13.7, y: 8.4))
-        path.line(to: NSPoint(x: 11.4, y: 9.7))
-        path.line(to: NSPoint(x: 13.7, y: 11.0))
+        path.move(to: NSPoint(x: 14.2, y: 10.4))
+        path.line(to: NSPoint(x: 17.8, y: 6.7))
+        path.line(to: NSPoint(x: 14.2, y: 3.0))
+        path.line(to: NSPoint(x: 13.3, y: 5.4))
+        path.line(to: NSPoint(x: 11.0, y: 6.7))
+        path.line(to: NSPoint(x: 13.3, y: 8.0))
         path.close()
         path.fill()
     }

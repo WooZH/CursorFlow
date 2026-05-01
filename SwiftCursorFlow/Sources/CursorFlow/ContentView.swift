@@ -65,7 +65,7 @@ struct ContentView: View {
         HStack {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text("CursorFlow")
-                    .font(.system(size: 21, weight: .bold))
+                    .font(.system(size: 19, weight: .bold))
                 statusPill(appActive ? t("active") : t("idle"), active: appActive)
             }
             Spacer()
@@ -99,7 +99,7 @@ struct ContentView: View {
                         model.config.language = language
                     } label: {
                         Text(languageShortLabel(language))
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .frame(height: 30)
                             .background(
@@ -160,7 +160,7 @@ struct ContentView: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
             }
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .frame(width: tab == item ? 156 : 42)
                 .frame(height: 30)
                 .background(
@@ -179,7 +179,7 @@ struct ContentView: View {
             section {
                 HStack {
                     Label(t("movement"), systemImage: "cursorarrow")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color.primary.opacity(0.90))
                     Spacer()
                     Toggle("", isOn: $model.movementEnabled).labelsHidden()
@@ -192,12 +192,12 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text(behaviorStateText)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
 
                 Text(t("autoMovementNote"))
-                    .font(.system(size: 12))
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -218,12 +218,12 @@ struct ContentView: View {
             section {
                 HStack {
                     Label(t("timer"), systemImage: "timer")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color.primary.opacity(0.90))
                     Spacer()
                     Text(timerText)
                         .foregroundStyle(.secondary)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: 11, design: .monospaced))
                     Toggle("", isOn: timerEnabledBinding).labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: accent))
                         .focusable(false)
@@ -245,7 +245,7 @@ struct ContentView: View {
             section {
                 HStack {
                     Label(t("click"), systemImage: "cursorarrow.click.2")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color.primary.opacity(0.90))
                     Spacer()
                     Toggle("", isOn: clickToggleBinding).labelsHidden()
@@ -275,7 +275,7 @@ struct ContentView: View {
                     Text(t("position"))
                     Spacer()
                     Text(positionText)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                     Button(model.isCapturingPosition ? t("waiting") : t("set")) {
@@ -297,7 +297,7 @@ struct ContentView: View {
                     Text(t("clicks"))
                     Spacer()
                     Text("\(model.clickCount)")
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(.system(size: 12, design: .monospaced))
                     Button(t("reset")) { model.resetClickCount() }
                         .buttonStyle(.plain)
                         .glassControl(cornerRadius: 8)
@@ -339,7 +339,7 @@ struct ContentView: View {
                         .foregroundStyle(Color.primary.opacity(0.90))
                     Spacer()
                     Text(scheduleStatusText)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.secondary)
                     Toggle("", isOn: scheduleEnabledBinding).labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: accent))
@@ -390,7 +390,7 @@ struct ContentView: View {
     private var footer: some View {
         VStack(spacing: 4) {
             Text(t("footer"))
-                .font(.system(size: 11.5))
+                .font(.system(size: 10.5))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
@@ -403,7 +403,7 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .focusable(false)
             }
-            .font(.system(size: 11, weight: .medium, design: .rounded))
+            .font(.system(size: 10.5, weight: .medium, design: .rounded))
             .foregroundStyle(.secondary.opacity(0.78))
             .frame(maxWidth: .infinity, alignment: .center)
         }
@@ -422,7 +422,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Label(t("helpTitle"), systemImage: "questionmark.circle")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                     Spacer()
                     Button {
                         withAnimation(.spring(response: 0.24, dampingFraction: 0.9)) {
@@ -430,7 +430,7 @@ struct ContentView: View {
                         }
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .frame(width: 24, height: 24)
                     }
                     .buttonStyle(.plain)
@@ -483,15 +483,15 @@ struct ContentView: View {
     private func helpSection(icon: String, title: String, body: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(accent)
                 .frame(width: 18, height: 18)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 12.5, weight: .semibold))
+                    .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(Color.primary.opacity(0.88))
                 Text(body)
-                    .font(.system(size: 12))
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -513,7 +513,7 @@ struct ContentView: View {
     private func headerIconButton(_ systemName: String, help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 18, weight: .regular))
+                .font(.system(size: 16, weight: .regular))
                 .symbolRenderingMode(.monochrome)
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
@@ -531,7 +531,7 @@ struct ContentView: View {
                     model.config.clickButton = button
                 } label: {
                     Text(localizedButton(button))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 30)
                         .background(
@@ -556,7 +556,7 @@ struct ContentView: View {
                 .fill(active ? Color.green : Color.green.opacity(0.85))
                 .frame(width: 7, height: 7)
             Text(text)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
@@ -762,7 +762,7 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(valueText)
-                .font(.system(size: 12, design: .monospaced))
+                .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 44, alignment: .trailing)
             Stepper("h", value: hour, in: 0...23)
